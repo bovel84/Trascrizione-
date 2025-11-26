@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VoiceScribe Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --accent: #00d4aa;
+            --accent-glow: rgba(0, 212, 170, 0.3);
+            --accent-secondary: #7c3aed;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+        }
+
+        .app-container {
+            max-width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 1rem 1.25rem;
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, transparent 100%);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+
+        .header-content { display: flex; align-items: center; justify-content: space-between; }
+
+        .logo { display: flex; align-items: center; gap: 0.75rem; }
+
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+        }
+
+        .logo-text {
+            font-weight: 700; font-size: 1.25rem;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .header-badges { display: flex; gap: 0.5rem; align-items: center; }
+
+        .status-badge {
+            padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+            display: flex; align-items: center; gap: 0.375rem;
+        }
+        .status-badge.idle { background: rgba(160, 160, 176, 0.15); color: var(--text-secondary); }
+        .status-badge.recording { background: rgba(239, 68, 68, 0.2); color: var(--danger); animation: pulse 1.5s infinite; }
+        .status-badge.processing { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .status-badge.background { background: rgba(124, 58, 237, 0.2); color: var(--accent-secondary); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .main-content { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; padding-bottom: 2rem; }
+
+        /* API Keys */
+        .api-section { background: var(--bg-card); border-radius: 16px; padding: 1rem; }
+        .api-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .api-box { background: var(--bg-secondary); border-radius: 12px; padding: 0.75rem; }
+        .api-box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .api-box-title { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); }
+        .api-box-link { font-size: 0.65rem; color: var(--accent); text-decoration: none; }
+        .api-box input { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.75rem; }
+        .api-box input:focus { outline: none; border-color: var(--accent); }
+        .api-box .saved { display: flex; align-items: center; gap: 0.25rem; color: var(--accent); font-size: 0.7rem; }
+        .api-box .change-btn { background: none; border: none; color: var(--text-muted); font-size: 0.65rem; cursor: pointer; text-decoration: underline; margin-left: auto; }
+        .api-save-btn { grid-column: span 2; padding: 0.625rem; border: none; border-radius: 10px; background: var(--accent); color: white; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+
+        /* Tabs */
+        .tabs { display: flex; background: var(--bg-secondary); border-radius: 16px; padding: 0.25rem; gap: 0.25rem; }
+        .tab { flex: 1; padding: 0.7rem 0.25rem; border: none; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 0.75rem; font-weight: 600; border-radius: 12px; cursor: pointer; }
+        .tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .tab-content { display: none; flex: 1; flex-direction: column; gap: 1rem; }
+        .tab-content.active { display: flex; }
+
+        /* Settings */
+        .settings-card { background: var(--bg-card); border-radius: 16px; padding: 1rem; }
+        .setting-row { display: flex; align-items: center; justify-content: space-between; }
+        .setting-info h4 { font-size: 0.85rem; margin-bottom: 0.125rem; }
+        .setting-info p { font-size: 0.7rem; color: var(--text-muted); }
+        .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--bg-secondary); border-radius: 26px; transition: 0.3s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+        .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+
+        /* Recording */
+        .recording-section { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1.25rem 1rem; }
+        .record-button-container { position: relative; }
+        .record-button { width: 90px; height: 90px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px var(--accent-glow); transition: transform 0.2s; }
+        .record-button:active { transform: scale(0.95); }
+        .record-button.recording { background: var(--danger); box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4); animation: pulseBtn 1s infinite; }
+        .record-button.processing { background: var(--warning); pointer-events: none; }
+        @keyframes pulseBtn { 0%, 100% { box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 8px 48px rgba(239, 68, 68, 0.6); } }
+        .record-button svg { width: 36px; height: 36px; fill: white; }
+        .record-rings { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 130px; height: 130px; border-radius: 50%; border: 2px solid var(--danger); opacity: 0; pointer-events: none; }
+        .record-button-container.recording .record-rings { animation: ringPulse 1.5s infinite; }
+        @keyframes ringPulse { 0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.8; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; } }
+        .timer { font-family: 'Space Mono', monospace; font-size: 1.75rem; color: var(--text-primary); }
+        .record-hint { font-size: 0.75rem; color: var(--text-muted); text-align: center; }
+        .visualizer { display: flex; align-items: center; justify-content: center; gap: 3px; height: 40px; }
+        .visualizer-bar { width: 5px; background: linear-gradient(180deg, var(--accent) 0%, var(--accent-secondary) 100%); border-radius: 3px; }
+
+        /* Progress */
+        .progress-section { background: var(--bg-card); border-radius: 12px; padding: 1rem; display: none; }
+        .progress-section.active { display: block; }
+        .progress-title { font-size: 0.8rem; margin-bottom: 0.5rem; }
+        .progress-bar { height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
+        .progress-text { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.375rem; }
+
+        /* Speakers */
+        .speaker-quick-select { background: var(--bg-card); border-radius: 16px; padding: 1rem; }
+        .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .speaker-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .speaker-chip { padding: 0.4rem 0.8rem; border-radius: 16px; border: 2px solid var(--border); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+        .speaker-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(0, 212, 170, 0.1); }
+        .speaker-chip.add { border-style: dashed; color: var(--text-muted); }
+        .speaker-chip.recording-active { animation: speakerPulse 1s infinite; }
+        @keyframes speakerPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.4); } 50% { box-shadow: 0 0 0 6px rgba(0, 212, 170, 0); } }
+        .speaker-1 { color: #00d4aa !important; border-color: #00d4aa !important; }
+        .speaker-1.active { background: rgba(0, 212, 170, 0.15) !important; }
+        .speaker-2 { color: #7c3aed !important; border-color: #7c3aed !important; }
+        .speaker-2.active { background: rgba(124, 58, 237, 0.15) !important; }
+        .speaker-3 { color: #f59e0b !important; border-color: #f59e0b !important; }
+        .speaker-3.active { background: rgba(245, 158, 11, 0.15) !important; }
+        .speaker-4 { color: #ef4444 !important; border-color: #ef4444 !important; }
+        .speaker-4.active { background: rgba(239, 68, 68, 0.15) !important; }
+        .speaker-5 { color: #3b82f6 !important; border-color: #3b82f6 !important; }
+        .speaker-5.active { background: rgba(59, 130, 246, 0.15) !important; }
+
+        .language-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+        .language-row label { font-size: 0.7rem; color: var(--text-muted); }
+        .control-select { flex: 1; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.75rem; }
+
+        /* Transcript */
+        .transcript-section { flex: 1; background: var(--bg-card); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; min-height: 160px; }
+        .transcript-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .transcript-count { color: var(--accent); font-size: 0.75rem; font-weight: 600; }
+        .new-btn { 
+            background: rgba(239, 68, 68, 0.15); 
+            border: none; 
+            color: var(--danger); 
+            font-size: 0.65rem; 
+            font-weight: 600; 
+            padding: 0.3rem 0.5rem; 
+            border-radius: 6px; 
+            cursor: pointer; 
+        }
+        .new-btn:active { transform: scale(0.95); }
+        .transcript-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .transcript-entry { margin-bottom: 0.875rem; }
+        .transcript-speaker { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
+        .speaker-label { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 6px; }
+        .label-speaker-1 { color: #00d4aa; background: rgba(0, 212, 170, 0.15); }
+        .label-speaker-2 { color: #7c3aed; background: rgba(124, 58, 237, 0.15); }
+        .label-speaker-3 { color: #f59e0b; background: rgba(245, 158, 11, 0.15); }
+        .label-speaker-4 { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
+        .label-speaker-5 { color: #3b82f6; background: rgba(59, 130, 246, 0.15); }
+        .transcript-time { font-size: 0.55rem; color: var(--text-muted); font-family: 'Space Mono', monospace; }
+        .transcript-text { font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); }
+        .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; padding: 1.5rem; }
+        .empty-state svg { width: 48px; height: 48px; margin-bottom: 0.75rem; opacity: 0.5; }
+
+        /* AI Analysis Tab */
+        .ai-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; }
+        .ai-btn { padding: 0.75rem; border: none; border-radius: 12px; background: var(--bg-card); color: var(--text-primary); font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transition: all 0.2s; border: 2px solid transparent; }
+        .ai-btn:hover { border-color: var(--accent); }
+        .ai-btn:active { transform: scale(0.98); }
+        .ai-btn.processing { opacity: 0.6; pointer-events: none; }
+        .ai-btn-icon { font-size: 1.25rem; }
+        .ai-btn-label { font-size: 0.7rem; color: var(--text-muted); }
+
+        .ai-result { background: var(--bg-card); border-radius: 16px; padding: 1rem; flex: 1; overflow-y: auto; }
+        .ai-result-title { font-size: 0.8rem; color: var(--accent); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        .ai-result-content { font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; }
+        .ai-result-empty { color: var(--text-muted); text-align: center; padding: 2rem; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+        .stat-card { background: var(--bg-card); border-radius: 12px; padding: 0.75rem; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.7rem; color: var(--text-muted); }
+
+        .speaker-breakdown { margin-top: 0.5rem; }
+        .speaker-bar { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; }
+        .speaker-bar-label { font-size: 0.65rem; font-weight: 600; width: 70px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .speaker-bar-track { flex: 1; height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; }
+        .speaker-bar-fill { height: 100%; border-radius: 3px; }
+        .speaker-bar-percent { font-size: 0.6rem; color: var(--text-muted); width: 28px; text-align: right; }
+
+        /* Export */
+        .export-section { display: flex; flex-direction: column; gap: 0.6rem; }
+        .export-card { background: var(--bg-card); border-radius: 14px; padding: 0.875rem; display: flex; align-items: center; gap: 0.875rem; cursor: pointer; }
+        .export-card:active { transform: scale(0.98); }
+        .export-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
+        .export-icon.pdf { background: rgba(239, 68, 68, 0.2); }
+        .export-icon.txt { background: rgba(0, 212, 170, 0.2); }
+        .export-icon.audio { background: rgba(124, 58, 237, 0.2); }
+        .export-info h3 { font-size: 0.85rem; margin-bottom: 0.1rem; }
+        .export-info p { font-size: 0.65rem; color: var(--text-muted); }
+
+        /* Saved */
+        .recordings-list { display: flex; flex-direction: column; gap: 0.6rem; }
+        .recording-item { background: var(--bg-card); border-radius: 14px; padding: 0.875rem; display: flex; align-items: center; gap: 0.875rem; }
+        .recording-item-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .recording-item-info { flex: 1; min-width: 0; }
+        .recording-item-title { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .recording-item-meta { font-size: 0.65rem; color: var(--text-muted); }
+        .recording-item-actions { display: flex; gap: 0.4rem; }
+        .action-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn.delete { color: var(--danger); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg-card); border-radius: 20px; padding: 1.25rem; width: 100%; max-width: 320px; }
+        .modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.875rem; }
+        .modal-input { width: 100%; padding: 0.7rem 0.875rem; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-secondary); color: var(--text-primary); font-family: inherit; font-size: 0.9rem; margin-bottom: 0.875rem; }
+        .modal-input:focus { outline: none; border-color: var(--accent); }
+        .modal-buttons { display: flex; gap: 0.6rem; }
+        .modal-btn { flex: 1; padding: 0.7rem; border: none; border-radius: 10px; font-family: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+        .modal-btn.cancel { background: var(--bg-secondary); color: var(--text-secondary); }
+        .modal-btn.confirm { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%); color: white; }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg-card); color: var(--text-primary); padding: 0.875rem 1.25rem; border-radius: 14px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4); z-index: 1001; opacity: 0; transition: all 0.3s; border: 1px solid var(--border); max-width: 90%; text-align: center; font-size: 0.85rem; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        #keepAliveAudio { display: none; }
+
+        /* Background warning banner */
+        .bg-warning {
+            background: linear-gradient(90deg, var(--danger), var(--warning));
+            color: white;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: none;
+            animation: bgPulse 2s infinite;
+        }
+        .bg-warning.active { display: block; }
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-warning" id="bgWarning">🔴 REGISTRAZIONE IN BACKGROUND - NON CHIUDERE L'APP</div>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🎙️</div>
+                    <span class="logo-text">VoiceScribe</span>
+                </div>
+                <div class="header-badges">
+                    <div class="status-badge background" id="bgBadge" style="display: none;"><span>🔒</span></div>
+                    <div class="status-badge idle" id="statusBadge">
+                        <span class="status-dot"></span>
+                        <span id="statusText">Pronto</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- API Keys -->
+            <div class="api-section">
+                <div class="api-grid" id="apiGrid">
+                    <div class="api-box">
+                        <div class="api-box-header">
+                            <span class="api-box-title">🎤 WHISPER (Trascrizione)</span>
+                            <a href="https://console.groq.com/keys" target="_blank" class="api-box-link">Ottieni</a>
+                        </div>
+                        <div id="whisperKeyBox">
+                            <input type="password" id="whisperKeyInput" placeholder="gsk_...">
+                        </div>
+                        <div id="whisperKeySaved" style="display: none;">
+                            <span class="saved">✓ Salvata</span>
+                            <button class="change-btn" onclick="changeKey('whisper')">Modifica</button>
+                        </div>
+                    </div>
+                    <div class="api-box">
+                        <div class="api-box-header">
+                            <span class="api-box-title">🤖 LLAMA (Analisi AI)</span>
+                            <a href="https://console.groq.com/keys" target="_blank" class="api-box-link">Ottieni</a>
+                        </div>
+                        <div id="llamaKeyBox">
+                            <input type="password" id="llamaKeyInput" placeholder="gsk_...">
+                        </div>
+                        <div id="llamaKeySaved" style="display: none;">
+                            <span class="saved">✓ Salvata</span>
+                            <button class="change-btn" onclick="changeKey('llama')">Modifica</button>
+                        </div>
+                    </div>
+                    <button class="api-save-btn" id="saveKeysBtn">Salva Chiavi</button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="record">Registra</button>
+                <button class="tab" data-tab="ai">AI ✨</button>
+                <button class="tab" data-tab="export">Esporta</button>
+                <button class="tab" data-tab="saved">Salvati</button>
+            </div>
+
+            <!-- Record Tab -->
+            <div class="tab-content active" id="recordTab">
+                <div class="settings-card">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <h4>🔒 Schermo Spento</h4>
+                            <p>Alza volume! Permetti notifiche!</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="backgroundToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="recording-section">
+                    <div class="record-button-container" id="recordBtnContainer">
+                        <button class="record-button" id="recordBtn">
+                            <svg viewBox="0 0 24 24" id="recordIcon">
+                                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                            </svg>
+                        </button>
+                        <div class="record-rings"></div>
+                    </div>
+                    <div class="timer" id="timer">00:00</div>
+                    <div class="visualizer" id="visualizer" style="display: none;"></div>
+                    <p class="record-hint" id="recordHint">Tocca per registrare</p>
+                </div>
+
+                <!-- Progress -->
+                <div class="progress-section" id="progressSection">
+                    <div class="progress-title" id="progressTitle">Elaborazione...</div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+
+                <!-- Speakers -->
+                <div class="speaker-quick-select">
+                    <div class="section-title">👤 Speaker</div>
+                    <div class="speaker-chips" id="speakerChips"></div>
+                    <div class="language-row">
+                        <label>Lingua:</label>
+                        <select class="control-select" id="languageSelect">
+                            <option value="it">🇮🇹 Italiano</option>
+                            <option value="en">🇺🇸 English</option>
+                            <option value="es">🇪🇸 Español</option>
+                            <option value="fr">🇫🇷 Français</option>
+                            <option value="de">🇩🇪 Deutsch</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Transcript -->
+                <div class="transcript-section">
+                    <div class="transcript-header">
+                        <div class="section-title">Trascrizione</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="transcript-count" id="transcriptCount">0 frasi</span>
+                            <button class="new-btn" onclick="newTranscript()" title="Nuova trascrizione">🗑️ Nuova</button>
+                        </div>
+                    </div>
+                    <div class="transcript-area" id="transcriptArea">
+                        <div class="empty-state" id="emptyState">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                            </svg>
+                            <p>Tocca per registrare<br>Audio lungo? Diviso automaticamente!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Analysis Tab -->
+            <div class="tab-content" id="aiTab">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-value" id="wordCount2">0</div><div class="stat-label">Parole</div></div>
+                    <div class="stat-card"><div class="stat-value" id="speakerCount2">0</div><div class="stat-label">Speaker</div></div>
+                </div>
+
+                <div class="ai-actions">
+                    <button class="ai-btn" onclick="runAI('correct')">
+                        <span class="ai-btn-icon">✏️</span>
+                        <span>Correggi</span>
+                        <span class="ai-btn-label">Grammatica</span>
+                    </button>
+                    <button class="ai-btn" onclick="runAI('summary')">
+                        <span class="ai-btn-icon">📝</span>
+                        <span>Riassumi</span>
+                        <span class="ai-btn-label">Sintesi</span>
+                    </button>
+                    <button class="ai-btn" onclick="runAI('keypoints')">
+                        <span class="ai-btn-icon">🎯</span>
+                        <span>Punti Chiave</span>
+                        <span class="ai-btn-label">Elenco</span>
+                    </button>
+                    <button class="ai-btn" onclick="runAI('improve')">
+                        <span class="ai-btn-icon">💎</span>
+                        <span>Migliora</span>
+                        <span class="ai-btn-label">Riscrittura</span>
+                    </button>
+                </div>
+
+                <div class="ai-result" id="aiResult">
+                    <div class="ai-result-empty">
+                        Seleziona un'azione AI per analizzare la trascrizione
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Tab -->
+            <div class="tab-content" id="exportTab">
+                <div class="export-section">
+                    <div class="export-card" onclick="exportPDF()"><div class="export-icon pdf">📄</div><div class="export-info"><h3>Esporta PDF</h3><p>Report completo</p></div></div>
+                    <div class="export-card" onclick="exportTXT()"><div class="export-icon txt">📝</div><div class="export-info"><h3>Esporta TXT</h3><p>Solo testo</p></div></div>
+                    <div class="export-card" onclick="exportAudio()"><div class="export-icon audio">🎵</div><div class="export-info"><h3>Scarica Audio</h3><p>File registrato</p></div></div>
+                    <div class="export-card" onclick="saveSession()"><div class="export-icon" style="background: rgba(16, 185, 129, 0.2);">💾</div><div class="export-info"><h3>Salva Sessione</h3><p>Locale</p></div></div>
+                </div>
+            </div>
+
+            <!-- Saved Tab -->
+            <div class="tab-content" id="savedTab">
+                <div class="recordings-list" id="recordingsList"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal">
+            <h2 class="modal-title">Salva Sessione</h2>
+            <input type="text" class="modal-input" id="sessionNameInput" placeholder="Nome">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="$('saveModal').classList.remove('active')">Annulla</button>
+                <button class="modal-btn confirm" onclick="confirmSaveSession()">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="speakerModal">
+        <div class="modal">
+            <h2 class="modal-title">Nuovo Speaker</h2>
+            <input type="text" class="modal-input" id="newSpeakerInput" placeholder="Nome">
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="$('speakerModal').classList.remove('active')">Annulla</button>
+                <button class="modal-btn confirm" onclick="confirmAddSpeaker()">Aggiungi</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <audio id="keepAliveAudio" loop></audio>
+
+    <script>
+        // ============ AGGRESSIVE BACKGROUND MODE ============
+        let bgAudioContext = null;
+        let bgOscillator = null;
+        let bgGain = null;
+        let bgInterval = null;
+        let notificationPermission = false;
+
+        async function startAggressiveBackground() {
+            // 1. Request notification permission (helps keep app alive)
+            if ('Notification' in window && Notification.permission === 'default') {
+                const perm = await Notification.requestPermission();
+                notificationPermission = perm === 'granted';
+            } else {
+                notificationPermission = Notification.permission === 'granted';
+            }
+
+            // 2. Show persistent notification
+            if (notificationPermission) {
+                new Notification('🎙️ VoiceScribe Registra', {
+                    body: 'Registrazione in corso... Non chiudere l\'app',
+                    tag: 'voicescribe-recording',
+                    requireInteraction: true,
+                    silent: true
+                });
+            }
+
+            // 3. Create audio context with oscillator (very low volume but audible to system)
+            try {
+                bgAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Resume audio context (needed for mobile)
+                if (bgAudioContext.state === 'suspended') {
+                    await bgAudioContext.resume();
+                }
+
+                // Create oscillator at very low frequency and volume
+                bgOscillator = bgAudioContext.createOscillator();
+                bgGain = bgAudioContext.createGain();
+                
+                bgOscillator.type = 'sine';
+                bgOscillator.frequency.setValueAtTime(1, bgAudioContext.currentTime); // 1Hz - inaudible
+                bgGain.gain.setValueAtTime(0.001, bgAudioContext.currentTime); // Very quiet
+                
+                bgOscillator.connect(bgGain);
+                bgGain.connect(bgAudioContext.destination);
+                bgOscillator.start();
+                
+                console.log('Background oscillator started');
+            } catch (e) {
+                console.log('Oscillator failed:', e);
+            }
+
+            // 4. Keep-alive interval (prevents JS suspension)
+            bgInterval = setInterval(() => {
+                // Touch the audio context to keep it alive
+                if (bgAudioContext && bgAudioContext.state === 'suspended') {
+                    bgAudioContext.resume();
+                }
+                // Log to show we're still running
+                if (isRecording) {
+                    console.log('Recording active:', new Date().toLocaleTimeString());
+                }
+            }, 1000);
+
+            // 5. Play actual audio element as backup
+            const audio = $('keepAliveAudio');
+            // Create a real (but quiet) audio tone
+            audio.src = createToneDataURL();
+            audio.volume = 0.01; // 1% volume
+            audio.play().catch(() => {});
+
+            // 6. Prevent page from going to sleep with visibility API workaround
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            // 7. Use MediaSession API to show in system media controls
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: 'VoiceScribe Registrazione',
+                    artist: 'In corso...',
+                    album: 'VoiceScribe Pro'
+                });
+                navigator.mediaSession.playbackState = 'playing';
+            }
+        }
+
+        function stopAggressiveBackground() {
+            // Stop oscillator
+            if (bgOscillator) {
+                try { bgOscillator.stop(); } catch(e) {}
+                bgOscillator = null;
+            }
+            if (bgAudioContext) {
+                bgAudioContext.close().catch(() => {});
+                bgAudioContext = null;
+            }
+
+            // Clear interval
+            if (bgInterval) {
+                clearInterval(bgInterval);
+                bgInterval = null;
+            }
+
+            // Stop audio
+            const audio = $('keepAliveAudio');
+            audio.pause();
+            audio.src = '';
+
+            // Close notification
+            if (notificationPermission && 'Notification' in window) {
+                // Can't close by tag, but new recordings will replace it
+            }
+
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        }
+
+        function handleVisibilityChange() {
+            if (document.visibilityState === 'visible') {
+                // Page became visible again - ensure audio is running
+                if (isRecording && bgAudioContext) {
+                    bgAudioContext.resume().catch(() => {});
+                }
+                // Re-request wake lock
+                if (backgroundMode && 'wakeLock' in navigator) {
+                    navigator.wakeLock.request('screen').then(wl => { wakeLock = wl; }).catch(() => {});
+                }
+            }
+        }
+
+        // Create a data URL for a quiet tone
+        function createToneDataURL() {
+            const sampleRate = 8000;
+            const duration = 10; // 10 seconds, will loop
+            const samples = sampleRate * duration;
+            const buffer = new ArrayBuffer(44 + samples * 2);
+            const view = new DataView(buffer);
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + samples * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, samples * 2, true);
+            
+            // Generate quiet 100Hz tone
+            for (let i = 0; i < samples; i++) {
+                const t = i / sampleRate;
+                const sample = Math.sin(2 * Math.PI * 100 * t) * 0.01; // Very quiet
+                view.setInt16(44 + i * 2, sample * 32767, true);
+            }
+            
+            const blob = new Blob([buffer], { type: 'audio/wav' });
+            return URL.createObjectURL(blob);
+        }
+        // ============ END BACKGROUND MODE ============
+    </script>
+
+    <script>
+        // State
+        let isRecording = false, isProcessing = false, mediaRecorder = null, audioChunks = [], audioBlob = null;
+        let transcriptEntries = [], speakers = ['Persona 1', 'Persona 2'], currentSpeaker = 1;
+        let startTime = null, timerInterval = null, audioContext = null, analyser = null, animationId = null;
+        let savedRecordings = JSON.parse(localStorage.getItem('voicescribe_recordings') || '[]');
+        let whisperKey = localStorage.getItem('groq_whisper_key') || '';
+        let llamaKey = localStorage.getItem('groq_llama_key') || '';
+        let wakeLock = null, backgroundMode = false;
+        const speakerColors = ['#00d4aa', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6'];
+        const CHUNK_DURATION = 10 * 60 * 1000; // 10 minutes in ms
+        const $ = id => document.getElementById(id);
+
+        // Init
+        function init() {
+            if (whisperKey) { $('whisperKeyBox').style.display = 'none'; $('whisperKeySaved').style.display = 'flex'; }
+            if (llamaKey) { $('llamaKeyBox').style.display = 'none'; $('llamaKeySaved').style.display = 'flex'; }
+            if (whisperKey && llamaKey) $('saveKeysBtn').style.display = 'none';
+            updateSpeakerChips(); renderSavedRecordings(); setupVisualizer(); setupEvents();
+        }
+
+        function setupVisualizer() {
+            const v = $('visualizer');
+            for (let i = 0; i < 10; i++) { const bar = document.createElement('div'); bar.className = 'visualizer-bar'; bar.style.height = '8px'; v.appendChild(bar); }
+        }
+
+        // API Keys
+        $('saveKeysBtn').onclick = () => {
+            const wk = $('whisperKeyInput').value.trim();
+            const lk = $('llamaKeyInput').value.trim();
+            if (wk && wk.startsWith('gsk_')) { whisperKey = wk; localStorage.setItem('groq_whisper_key', wk); $('whisperKeyBox').style.display = 'none'; $('whisperKeySaved').style.display = 'flex'; }
+            if (lk && lk.startsWith('gsk_')) { llamaKey = lk; localStorage.setItem('groq_llama_key', lk); $('llamaKeyBox').style.display = 'none'; $('llamaKeySaved').style.display = 'flex'; }
+            if (whisperKey && llamaKey) $('saveKeysBtn').style.display = 'none';
+            showToast('✓ Chiavi salvate');
+        };
+
+        window.changeKey = type => {
+            if (type === 'whisper') { $('whisperKeyBox').style.display = 'block'; $('whisperKeySaved').style.display = 'none'; $('whisperKeyInput').value = ''; }
+            else { $('llamaKeyBox').style.display = 'block'; $('llamaKeySaved').style.display = 'none'; $('llamaKeyInput').value = ''; }
+            $('saveKeysBtn').style.display = 'block';
+        };
+
+        // Background Mode
+        async function enableBackgroundMode() {
+            backgroundMode = true; 
+            $('bgBadge').style.display = 'flex';
+            $('bgWarning').classList.add('active');
+            
+            // Wake Lock
+            if ('wakeLock' in navigator) {
+                try { 
+                    wakeLock = await navigator.wakeLock.request('screen'); 
+                    console.log('Wake Lock acquired');
+                } catch (e) { 
+                    console.log('Wake Lock failed:', e); 
+                }
+            }
+            
+            // Start aggressive background keeping
+            await startAggressiveBackground();
+            
+            showToast('🔒 Background attivo - Non chiudere l\'app');
+        }
+
+        function disableBackgroundMode() {
+            backgroundMode = false; 
+            $('bgBadge').style.display = 'none';
+            $('bgWarning').classList.remove('active');
+            if (wakeLock) { wakeLock.release(); wakeLock = null; }
+            
+            // Stop aggressive background
+            stopAggressiveBackground();
+        }
+
+        // Speakers
+        function updateSpeakerChips() {
+            const c = $('speakerChips'); c.innerHTML = '';
+            speakers.forEach((name, i) => {
+                const chip = document.createElement('button');
+                chip.className = `speaker-chip speaker-${i+1} ${i+1 === currentSpeaker ? 'active' : ''} ${isRecording && i+1 === currentSpeaker ? 'recording-active' : ''}`;
+                chip.textContent = name; chip.onclick = () => { currentSpeaker = i+1; updateSpeakerChips(); if (isRecording) showToast(`👤 ${name}`); };
+                c.appendChild(chip);
+            });
+            const add = document.createElement('button'); add.className = 'speaker-chip add'; add.textContent = '+';
+            add.onclick = () => $('speakerModal').classList.add('active'); c.appendChild(add);
+        }
+
+        window.confirmAddSpeaker = () => {
+            const name = $('newSpeakerInput').value.trim();
+            if (name && speakers.length < 5) { speakers.push(name); currentSpeaker = speakers.length; updateSpeakerChips(); $('speakerModal').classList.remove('active'); $('newSpeakerInput').value = ''; }
+        };
+
+        // Recording
+        async function startRecording() {
+            if (!whisperKey) return showToast('⚠️ Inserisci chiave Whisper');
+            
+            // If background mode, warn user
+            if ($('backgroundToggle').checked) {
+                // Request notification permission first
+                if ('Notification' in window && Notification.permission === 'default') {
+                    await Notification.requestPermission();
+                }
+                showToast('🔊 Tieni volume alto!');
+                await new Promise(r => setTimeout(r, 1000));
+            }
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } });
+                if ($('backgroundToggle').checked) await enableBackgroundMode();
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                audioContext.createMediaStreamSource(stream).connect(analyser);
+                analyser.fftSize = 256;
+
+                const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+                mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.onstop = async () => { stream.getTracks().forEach(t => t.stop()); audioBlob = new Blob(audioChunks, { type: mime }); await processAudio(audioBlob); };
+                mediaRecorder.start(1000);
+
+                isRecording = true; startTime = Date.now(); updateUI(); updateSpeakerChips(); startTimer(); startVisualizer();
+            } catch (e) { showToast('⚠️ ' + e.message); }
+        }
+
+        function stopRecording() {
+            if (!isRecording) return;
+            isRecording = false; isProcessing = true;
+            if (mediaRecorder?.state !== 'inactive') mediaRecorder.stop();
+            if (animationId) cancelAnimationFrame(animationId);
+            if (audioContext) audioContext.close().catch(() => {});
+            clearInterval(timerInterval);
+            if (backgroundMode) disableBackgroundMode();
+            updateUI(); updateSpeakerChips();
+        }
+
+        // Audio Processing with Chunking
+        async function processAudio(blob) {
+            const duration = (Date.now() - startTime);
+            
+            if (duration <= CHUNK_DURATION) {
+                // Short audio - single transcription
+                await transcribeChunk(blob, 0, 1);
+            } else {
+                // Long audio - split into chunks
+                const numChunks = Math.ceil(duration / CHUNK_DURATION);
+                showProgress(true, `Divido audio in ${numChunks} parti...`, 0);
+                
+                const chunks = await splitAudioBlob(blob, numChunks);
+                let fullText = '';
+                
+                for (let i = 0; i < chunks.length; i++) {
+                    showProgress(true, `Trascrivo parte ${i + 1}/${chunks.length}...`, ((i) / chunks.length) * 100);
+                    const text = await transcribeChunk(chunks[i], i, chunks.length, false);
+                    if (text) fullText += (fullText ? ' ' : '') + text;
+                }
+                
+                if (fullText) {
+                    addEntry(fullText);
+                    showToast(`✓ ${numChunks} parti trascritte`);
+                }
+                showProgress(false);
+            }
+            
+            isProcessing = false; updateUI(); $('recordHint').textContent = 'Tocca per registrare';
+        }
+
+        async function splitAudioBlob(blob, numChunks) {
+            // For simplicity, we'll split the blob by size proportionally
+            const chunkSize = Math.ceil(blob.size / numChunks);
+            const chunks = [];
+            
+            for (let i = 0; i < numChunks; i++) {
+                const start = i * chunkSize;
+                const end = Math.min(start + chunkSize, blob.size);
+                // Keep the same type for compatibility
+                chunks.push(blob.slice(start, end, blob.type));
+            }
+            
+            return chunks;
+        }
+
+        async function transcribeChunk(blob, index, total, addToEntries = true) {
+            if (total === 1) {
+                setStatus('processing', 'Trascrivo...');
+                $('recordHint').textContent = 'Whisper AI...';
+            }
+
+            try {
+                const form = new FormData();
+                form.append('file', blob, `audio_${index}.webm`);
+                form.append('model', 'whisper-large-v3');
+                form.append('language', $('languageSelect').value);
+
+                const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                    method: 'POST', headers: { 'Authorization': `Bearer ${whisperKey}` }, body: form
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error?.message || `Errore ${res.status}`);
+                
+                const text = data.text?.trim();
+                if (text && addToEntries) {
+                    addEntry(text);
+                    showToast('✓ Completato');
+                }
+                return text || '';
+            } catch (e) {
+                showToast('⚠️ ' + e.message);
+                return '';
+            }
+        }
+
+        function showProgress(show, title = '', percent = 0) {
+            const section = $('progressSection');
+            if (show) {
+                section.classList.add('active');
+                $('progressTitle').textContent = title;
+                $('progressFill').style.width = `${percent}%`;
+                $('progressText').textContent = `${Math.round(percent)}%`;
+            } else {
+                section.classList.remove('active');
+            }
+        }
+
+        // AI Analysis
+        window.runAI = async (action) => {
+            if (!llamaKey) return showToast('⚠️ Inserisci chiave Llama');
+            if (!transcriptEntries.length) return showToast('⚠️ Nessuna trascrizione');
+
+            const text = transcriptEntries.map(e => `${e.speakerName}: ${e.text}`).join('\n');
+            const prompts = {
+                correct: `Correggi gli errori grammaticali e di punteggiatura nel seguente testo trascritto, mantenendo il significato originale. Rispondi solo con il testo corretto:\n\n${text}`,
+                summary: `Crea un riassunto conciso del seguente testo, evidenziando i punti principali discussi:\n\n${text}`,
+                keypoints: `Estrai i punti chiave dal seguente testo sotto forma di elenco puntato:\n\n${text}`,
+                improve: `Riscrivi il seguente testo in modo più chiaro, professionale e ben strutturato, mantenendo tutte le informazioni:\n\n${text}`
+            };
+
+            const titles = { correct: '✏️ Testo Corretto', summary: '📝 Riassunto', keypoints: '🎯 Punti Chiave', improve: '💎 Testo Migliorato' };
+
+            // Disable buttons
+            document.querySelectorAll('.ai-btn').forEach(btn => btn.classList.add('processing'));
+            $('aiResult').innerHTML = '<div class="ai-result-empty">⏳ Elaborazione AI in corso...</div>';
+
+            try {
+                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${llamaKey}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: 'llama-3.1-8b-instant',
+                        messages: [{ role: 'user', content: prompts[action] }],
+                        max_tokens: 2048,
+                        temperature: 0.3
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error?.message || 'Errore API');
+
+                const result = data.choices?.[0]?.message?.content || 'Nessun risultato';
+                $('aiResult').innerHTML = `
+                    <div class="ai-result-title">${titles[action]}</div>
+                    <div class="ai-result-content">${result}</div>
+                `;
+            } catch (e) {
+                $('aiResult').innerHTML = `<div class="ai-result-empty">⚠️ ${e.message}</div>`;
+            }
+
+            document.querySelectorAll('.ai-btn').forEach(btn => btn.classList.remove('processing'));
+        };
+
+        // UI
+        function updateUI() {
+            const btn = $('recordBtn'), cont = $('recordBtnContainer'), icon = $('recordIcon');
+            btn.classList.remove('recording', 'processing'); cont.classList.remove('recording');
+            if (isProcessing) {
+                btn.classList.add('processing');
+                icon.innerHTML = '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6" fill="none" stroke="white" stroke-width="2" stroke-dasharray="20"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></circle>';
+                setStatus('processing', 'Elaboro...'); $('visualizer').style.display = 'none';
+            } else if (isRecording) {
+                btn.classList.add('recording'); cont.classList.add('recording');
+                icon.innerHTML = '<rect x="6" y="6" width="12" height="12" rx="2"/>';
+                setStatus('recording', 'REC'); $('visualizer').style.display = 'flex';
+            } else {
+                icon.innerHTML = '<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>';
+                setStatus('idle', 'Pronto'); $('visualizer').style.display = 'none';
+            }
+        }
+
+        function setStatus(type, text) { $('statusBadge').className = `status-badge ${type}`; $('statusText').textContent = text; }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const s = Math.floor((Date.now() - startTime) / 1000);
+                $('timer').textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+            }, 1000);
+        }
+
+        function startVisualizer() {
+            const bars = $('visualizer').querySelectorAll('.visualizer-bar');
+            (function animate() {
+                if (!isRecording || !analyser) return;
+                const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data);
+                bars.forEach((bar, i) => { bar.style.height = `${Math.max(8, (data[i*4]/255)*40)}px`; });
+                animationId = requestAnimationFrame(animate);
+            })();
+        }
+
+        // Transcript
+        function addEntry(text) {
+            const entry = { speaker: currentSpeaker, speakerName: speakers[currentSpeaker-1], text, time: $('timer').textContent, timestamp: Date.now() };
+            transcriptEntries.push(entry); renderEntry(entry); updateStats();
+        }
+
+        function renderEntry(entry) {
+            $('emptyState').style.display = 'none';
+            const div = document.createElement('div'); div.className = 'transcript-entry';
+            div.innerHTML = `<div class="transcript-speaker"><span class="speaker-label label-speaker-${entry.speaker}">${entry.speakerName}</span><span class="transcript-time">${entry.time}</span></div><p class="transcript-text">${entry.text}</p>`;
+            $('transcriptArea').appendChild(div); $('transcriptArea').scrollTop = $('transcriptArea').scrollHeight;
+        }
+
+        function updateStats() {
+            $('transcriptCount').textContent = `${transcriptEntries.length} frasi`;
+            const text = transcriptEntries.map(e => e.text).join(' '), words = text.split(/\s+/).filter(w => w);
+            $('wordCount2').textContent = words.length;
+            const sw = {}; transcriptEntries.forEach(e => { sw[e.speakerName] = (sw[e.speakerName]||0) + e.text.split(/\s+/).length; });
+            $('speakerCount2').textContent = Object.keys(sw).length;
+        }
+
+        function renderAllEntries() {
+            $('transcriptArea').innerHTML = '';
+            if (!transcriptEntries.length) {
+                const e = document.createElement('div'); e.className = 'empty-state'; e.id = 'emptyState';
+                e.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg><p>Tocca per registrare</p>';
+                $('transcriptArea').appendChild(e);
+            } else transcriptEntries.forEach(renderEntry);
+            updateStats();
+        }
+
+        // Export
+        window.exportPDF = () => {
+            if (!transcriptEntries.length) return showToast('Nessuna trascrizione');
+            const { jsPDF } = window.jspdf, doc = new jsPDF();
+            doc.setFontSize(20); doc.setTextColor(0,212,170); doc.text('VoiceScribe Pro', 20, 25);
+            doc.setFontSize(10); doc.setTextColor(100); doc.text(`${new Date().toLocaleDateString('it-IT')} - ${$('timer').textContent}`, 20, 32);
+            doc.line(20,36,190,36); let y = 45; doc.setFontSize(9);
+            transcriptEntries.forEach(e => {
+                if (y > 270) { doc.addPage(); y = 20; }
+                doc.setTextColor(0,150,120); doc.text(`[${e.time}] ${e.speakerName}:`, 20, y); y += 5;
+                doc.setTextColor(0); doc.splitTextToSize(e.text, 165).forEach(l => { if (y > 270) { doc.addPage(); y = 20; } doc.text(l, 25, y); y += 4; }); y += 3;
+            });
+            doc.save(`voicescribe_${Date.now()}.pdf`); showToast('✓ PDF');
+        };
+
+        window.exportTXT = () => {
+            if (!transcriptEntries.length) return showToast('Nessuna trascrizione');
+            let c = `VoiceScribe - ${new Date().toLocaleDateString('it-IT')}\n${'='.repeat(40)}\n\n`;
+            transcriptEntries.forEach(e => { c += `[${e.time}] ${e.speakerName}:\n${e.text}\n\n`; });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([c],{type:'text/plain;charset=utf-8'})); a.download = `voicescribe_${Date.now()}.txt`; a.click(); showToast('✓ TXT');
+        };
+
+        window.exportAudio = () => { if (!audioBlob) return showToast('Nessun audio'); const a = document.createElement('a'); a.href = URL.createObjectURL(audioBlob); a.download = `voicescribe_${Date.now()}.webm`; a.click(); showToast('✓ Audio'); };
+
+        window.saveSession = () => { if (!transcriptEntries.length) return showToast('Nessuna trascrizione'); $('sessionNameInput').value = `Reg. ${new Date().toLocaleDateString('it-IT')}`; $('saveModal').classList.add('active'); };
+
+        window.confirmSaveSession = () => {
+            const name = $('sessionNameInput').value.trim(); if (!name) return;
+            savedRecordings.push({ id: Date.now(), name, date: new Date().toISOString(), duration: $('timer').textContent, entries: transcriptEntries, speakers });
+            localStorage.setItem('voicescribe_recordings', JSON.stringify(savedRecordings));
+            $('saveModal').classList.remove('active'); renderSavedRecordings(); showToast('✓ Salvato');
+        };
+
+        // Saved
+        function renderSavedRecordings() {
+            const c = $('recordingsList');
+            c.innerHTML = savedRecordings.length ? savedRecordings.map(r => `
+                <div class="recording-item">
+                    <div class="recording-item-icon">🎙️</div>
+                    <div class="recording-item-info"><div class="recording-item-title">${r.name}</div><div class="recording-item-meta">${new Date(r.date).toLocaleDateString('it-IT')} • ${r.duration}</div></div>
+                    <div class="recording-item-actions"><button class="action-btn" onclick="loadRec(${r.id})">📂</button><button class="action-btn delete" onclick="delRec(${r.id})">🗑️</button></div>
+                </div>
+            `).join('') : '<div class="empty-state"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg><p>Nessuna registrazione</p></div>';
+        }
+
+        window.loadRec = id => {
+            const r = savedRecordings.find(x => x.id === id); if (!r) return;
+            transcriptEntries = [...r.entries]; if (r.speakers) speakers = [...r.speakers]; $('timer').textContent = r.duration;
+            updateSpeakerChips(); renderAllEntries();
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="record"]').classList.add('active'); $('recordTab').classList.add('active');
+            showToast(`Caricato`);
+        };
+
+        window.delRec = id => { if (!confirm('Eliminare?')) return; savedRecordings = savedRecordings.filter(r => r.id !== id); localStorage.setItem('voicescribe_recordings', JSON.stringify(savedRecordings)); renderSavedRecordings(); showToast('Eliminata'); };
+
+        // Events
+        function setupEvents() {
+            $('recordBtn').onclick = () => { if (isProcessing) return; isRecording ? stopRecording() : startRecording(); };
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.onclick = () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active'); $(`${tab.dataset.tab}Tab`).classList.add('active');
+                };
+            });
+            ['sessionNameInput', 'whisperKeyInput', 'llamaKeyInput', 'newSpeakerInput'].forEach(id => {
+                $(id).onkeypress = e => { if (e.key === 'Enter') { if (id.includes('Key')) $('saveKeysBtn').click(); else if (id === 'sessionNameInput') confirmSaveSession(); else confirmAddSpeaker(); } };
+            });
+        }
+
+        function showToast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+
+        // New Transcript
+        window.newTranscript = () => {
+            if (isRecording) return showToast('⚠️ Ferma prima la registrazione');
+            if (!transcriptEntries.length) return showToast('Già vuota');
+            
+            if (confirm('Cancellare la trascrizione attuale?')) {
+                transcriptEntries = [];
+                audioBlob = null;
+                $('timer').textContent = '00:00';
+                renderAllEntries();
+                updateStats();
+                $('aiResult').innerHTML = '<div class="ai-result-empty">Seleziona un\'azione AI per analizzare la trascrizione</div>';
+                showToast('✓ Nuova trascrizione');
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>
