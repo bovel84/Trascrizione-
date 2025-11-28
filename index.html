@@ -6,7 +6,18 @@
     <title>VoiceScribe Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: 'default', 
+            securityLevel: 'loose',
+            suppressErrors: true,
+            flowchart: { htmlLabels: true, curve: 'basis' },
+            logLevel: 'error'
+        });
+    </script>
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -164,36 +175,24 @@
         .control-select { flex: 1; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.75rem; }
 
         /* Transcript */
-        .transcript-section { flex: 1; background: linear-gradient(145deg, rgba(18,18,26,0.9), rgba(26,26,36,0.9)); border-radius: 18px; padding: 1.1rem; display: flex; flex-direction: column; min-height: 160px; box-shadow: 0 12px 32px rgba(0,0,0,0.35); border: 1px solid var(--border); }
-        .transcript-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-        .transcript-count { color: var(--accent); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+        .transcript-section { flex: 1; background: var(--bg-card); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; min-height: 160px; }
+        .transcript-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .transcript-count { color: var(--accent); font-size: 0.75rem; font-weight: 600; }
         .new-btn { background: rgba(239, 68, 68, 0.15); border: none; color: var(--danger); font-size: 0.65rem; font-weight: 600; padding: 0.3rem 0.5rem; border-radius: 6px; cursor: pointer; }
         .new-btn:active { transform: scale(0.95); }
-        .transcript-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0.75rem; }
-        .transcript-entry { margin: 0; padding: 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: linear-gradient(120deg, rgba(255,255,255,0.03), rgba(0,212,170,0.08)); box-shadow: 0 10px 20px rgba(0,0,0,0.22); }
-        .transcript-entry:nth-child(odd) { background: linear-gradient(120deg, rgba(255,255,255,0.03), rgba(124,58,237,0.08)); }
-        .transcript-speaker { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
-        .speaker-label { font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 10px; letter-spacing: 0.02em; }
+        .transcript-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .transcript-entry { margin-bottom: 0.875rem; }
+        .transcript-speaker { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.2rem; }
+        .speaker-label { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 6px; }
         .label-speaker-1 { color: #00d4aa; background: rgba(0, 212, 170, 0.15); }
         .label-speaker-2 { color: #7c3aed; background: rgba(124, 58, 237, 0.15); }
         .label-speaker-3 { color: #f59e0b; background: rgba(245, 158, 11, 0.15); }
         .label-speaker-4 { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
         .label-speaker-5 { color: #3b82f6; background: rgba(59, 130, 246, 0.15); }
-        .transcript-time { font-size: 0.6rem; color: var(--text-muted); font-family: 'Space Mono', monospace; padding: 0.1rem 0.35rem; border-radius: 6px; background: rgba(255,255,255,0.04); }
-        .transcript-text { font-size: 0.95rem; line-height: 1.65; color: var(--text-primary); letter-spacing: 0.01em; }
+        .transcript-time { font-size: 0.55rem; color: var(--text-muted); font-family: 'Space Mono', monospace; }
+        .transcript-text { font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); }
         .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; padding: 1.5rem; }
         .empty-state svg { width: 48px; height: 48px; margin-bottom: 0.75rem; opacity: 0.5; }
-
-        /* AI Insights */
-        .insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
-        .insight-card { background: var(--bg-card); border-radius: 14px; padding: 0.9rem; border: 1px solid var(--border); box-shadow: 0 10px 24px rgba(0,0,0,0.28); display: flex; flex-direction: column; gap: 0.5rem; }
-        .insight-card h4 { margin: 0; font-size: 0.9rem; letter-spacing: 0.03em; color: var(--text-secondary); text-transform: uppercase; }
-        .insight-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
-        .chart-wrapper { position: relative; width: 100%; height: 220px; }
-        .concept-map { width: 100%; height: 220px; border-radius: 12px; background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(124,58,237,0.08)); border: 1px dashed var(--border); }
-        .concept-node { fill: rgba(0,212,170,0.2); stroke: var(--accent); stroke-width: 1.2; }
-        .concept-label { font-size: 12px; fill: var(--text-primary); text-anchor: middle; }
-        .concept-link { stroke: rgba(255,255,255,0.25); stroke-width: 1.2; }
 
         /* ============ NOTES & DRAWING TAB ============ */
         .notes-container { display: flex; flex-direction: column; gap: 1rem; flex: 1; }
@@ -262,17 +261,36 @@
         }
 
         /* AI Analysis Tab */
-        .ai-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; }
+        .ai-section-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; margin-top: 0.5rem; }
+        .ai-section-title:first-of-type { margin-top: 0; }
+        .ai-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
         .ai-btn { padding: 0.75rem; border: none; border-radius: 12px; background: var(--bg-card); color: var(--text-primary); font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; transition: all 0.2s; border: 2px solid transparent; }
         .ai-btn:hover { border-color: var(--accent); }
         .ai-btn:active { transform: scale(0.98); }
         .ai-btn.processing { opacity: 0.6; pointer-events: none; }
+        .ai-btn.schema-btn { background: linear-gradient(135deg, var(--bg-card) 0%, rgba(124, 58, 237, 0.1) 100%); }
+        .ai-btn.schema-btn:hover { border-color: var(--accent-secondary); }
         .ai-btn-icon { font-size: 1.25rem; }
         .ai-btn-label { font-size: 0.7rem; color: var(--text-muted); }
-        .ai-result { background: var(--bg-card); border-radius: 16px; padding: 1rem; flex: 1; overflow-y: auto; }
+        .ai-result { background: var(--bg-card); border-radius: 16px; padding: 1rem; flex: 1; overflow-y: auto; margin-bottom: 0.75rem; }
         .ai-result-title { font-size: 0.8rem; color: var(--accent); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
         .ai-result-content { font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; }
         .ai-result-empty { color: var(--text-muted); text-align: center; padding: 2rem; }
+        
+        /* Mermaid Schema */
+        .mermaid-container { background: var(--bg-card); border-radius: 16px; padding: 1rem; border: 2px solid var(--accent-secondary); }
+        .mermaid-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+        .mermaid-header span { font-size: 0.85rem; font-weight: 600; color: var(--accent-secondary); }
+        .mermaid-copy-btn { padding: 0.4rem 0.75rem; border: none; border-radius: 8px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 0.7rem; cursor: pointer; }
+        .mermaid-copy-btn:active { transform: scale(0.95); }
+        .mermaid-render { background: #ffffff; border-radius: 12px; padding: 1rem; min-height: 150px; max-height: 500px; overflow: auto; }
+        .mermaid-render svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+        .mermaid-code-details { margin-top: 0.75rem; }
+        .mermaid-code-details summary { font-size: 0.7rem; color: var(--text-muted); cursor: pointer; padding: 0.5rem; }
+        .mermaid-code { background: var(--bg-secondary); border-radius: 8px; padding: 0.75rem; font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--text-secondary); overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-top: 0.5rem; }
+        
+        /* Stile per cattura PDF */
+        .mermaid-render.pdf-capture { max-height: none; overflow: visible; width: 700px; padding: 20px; }
 
         /* Stats */
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
@@ -303,6 +321,7 @@
         .item-badge.audio { background: rgba(124, 58, 237, 0.2); color: var(--accent-secondary); }
         .item-badge.notes { background: rgba(0, 212, 170, 0.2); color: var(--accent); }
         .item-badge.drawing { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .item-badge.ai { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
         .recording-item-actions { display: flex; gap: 0.4rem; }
         .action-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
         .action-btn:active { transform: scale(0.95); }
@@ -363,21 +382,38 @@
         <main class="main-content">
             <!-- API Keys -->
             <div class="api-section">
-                <div class="api-grid" id="apiGrid">
+                <div class="api-grid" id="apiGrid" style="grid-template-columns: 1fr;">
                     <div class="api-box">
                         <div class="api-box-header">
-                            <span class="api-box-title">🎤 WHISPER</span>
+                            <span class="api-box-title">🎤 WHISPER (Groq)</span>
                             <a href="https://console.groq.com/keys" target="_blank" class="api-box-link">Ottieni</a>
                         </div>
                         <div id="whisperKeyBox"><input type="password" id="whisperKeyInput" placeholder="gsk_..."></div>
                         <div id="whisperKeySaved" style="display: none;"><span class="saved">✓ Salvata</span><button class="change-btn" onclick="changeKey('whisper')">Modifica</button></div>
                     </div>
-                    <div class="api-box">
+                    <div class="api-box" style="margin-top: 0.5rem;">
                         <div class="api-box-header">
-                            <span class="api-box-title">🤖 LLAMA</span>
-                            <a href="https://console.groq.com/keys" target="_blank" class="api-box-link">Ottieni</a>
+                            <span class="api-box-title">🤖 AI ANALISI</span>
                         </div>
-                        <div id="llamaKeyBox"><input type="password" id="llamaKeyInput" placeholder="gsk_..."></div>
+                        <select id="aiModelSelect" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.75rem; margin-bottom: 0.5rem;">
+                            <option value="gemma">🌟 Gemma 3 27B (OpenRouter - Gratuito)</option>
+                            <option value="llama">⚡ Llama 3.1 8B (Groq)</option>
+                        </select>
+                        <div id="gemmaKeyBox">
+                            <div class="api-box-header" style="margin-bottom: 0.25rem;">
+                                <span class="api-box-title" style="font-size: 0.6rem;">OpenRouter API Key</span>
+                                <a href="https://openrouter.ai/keys" target="_blank" class="api-box-link">Ottieni</a>
+                            </div>
+                            <input type="password" id="gemmaKeyInput" placeholder="sk-or-...">
+                        </div>
+                        <div id="gemmaKeySaved" style="display: none;"><span class="saved">✓ Salvata</span><button class="change-btn" onclick="changeKey('gemma')">Modifica</button></div>
+                        <div id="llamaKeyBox" style="display: none;">
+                            <div class="api-box-header" style="margin-bottom: 0.25rem;">
+                                <span class="api-box-title" style="font-size: 0.6rem;">Groq API Key</span>
+                                <a href="https://console.groq.com/keys" target="_blank" class="api-box-link">Ottieni</a>
+                            </div>
+                            <input type="password" id="llamaKeyInput" placeholder="gsk_...">
+                        </div>
                         <div id="llamaKeySaved" style="display: none;"><span class="saved">✓ Salvata</span><button class="change-btn" onclick="changeKey('llama')">Modifica</button></div>
                     </div>
                     <button class="api-save-btn" id="saveKeysBtn">Salva Chiavi</button>
@@ -522,28 +558,34 @@
                     <div class="stat-card"><div class="stat-value" id="wordCount2">0</div><div class="stat-label">Parole</div></div>
                     <div class="stat-card"><div class="stat-value" id="speakerCount2">0</div><div class="stat-label">Speaker</div></div>
                 </div>
+                <div class="ai-section-title">📝 Elaborazione Testo</div>
                 <div class="ai-actions">
-                    <button class="ai-btn" onclick="runAI('correct')"><span class="ai-btn-icon">G</span><span>Correggi</span><span class="ai-btn-label">Grammatica</span></button>
-                    <button class="ai-btn" onclick="runAI('summary')"><span class="ai-btn-icon">R</span><span>Riassumi</span><span class="ai-btn-label">Sintesi</span></button>
-                    <button class="ai-btn" onclick="runAI('keypoints')"><span class="ai-btn-icon">K</span><span>Punti Chiave</span><span class="ai-btn-label">Elenco</span></button>
-                    <button class="ai-btn" onclick="runAI('improve')"><span class="ai-btn-icon">M</span><span>Migliora</span><span class="ai-btn-label">Riscrittura</span></button>
-                    <button class="ai-btn" onclick="runAI('chart')"><span class="ai-btn-icon">GR</span><span>Grafico</span><span class="ai-btn-label">Distribuzioni</span></button>
-                    <button class="ai-btn" onclick="runAI('concept')"><span class="ai-btn-icon">MAP</span><span>Mappa</span><span class="ai-btn-label">Concettuale</span></button>
+                    <button class="ai-btn" onclick="runAI('correct')"><span class="ai-btn-icon">✏️</span><span>Correggi</span><span class="ai-btn-label">Grammatica</span></button>
+                    <button class="ai-btn" onclick="runAI('summary')"><span class="ai-btn-icon">📝</span><span>Riassumi</span><span class="ai-btn-label">Sintesi</span></button>
+                    <button class="ai-btn" onclick="runAI('keypoints')"><span class="ai-btn-icon">🎯</span><span>Punti Chiave</span><span class="ai-btn-label">Elenco</span></button>
+                    <button class="ai-btn" onclick="runAI('improve')"><span class="ai-btn-icon">💎</span><span>Migliora</span><span class="ai-btn-label">Riscrittura</span></button>
+                </div>
+                <div class="ai-section-title">🔀 Schemi Logici</div>
+                <div class="ai-actions">
+                    <button class="ai-btn schema-btn" onclick="runAI('flowchart')"><span class="ai-btn-icon">🔀</span><span>Flowchart</span><span class="ai-btn-label">Flusso processi</span></button>
+                    <button class="ai-btn schema-btn" onclick="runAI('mindmap')"><span class="ai-btn-icon">🧠</span><span>Mappa</span><span class="ai-btn-label">Concetti</span></button>
+                    <button class="ai-btn schema-btn" onclick="runAI('timeline')"><span class="ai-btn-icon">📅</span><span>Timeline</span><span class="ai-btn-label">Cronologia</span></button>
+                    <button class="ai-btn schema-btn" onclick="runAI('relations')"><span class="ai-btn-icon">🔗</span><span>Relazioni</span><span class="ai-btn-label">Connessioni</span></button>
                 </div>
                 <div class="ai-result" id="aiResult"><div class="ai-result-empty">Seleziona un'azione AI</div></div>
-                <div class="insight-grid">
-                    <div class="insight-card">
-                        <h4>Grafico generato</h4>
-                        <div class="insight-meta" id="chartStatus">Pronto per creare un grafico dalle trascrizioni</div>
-                        <div class="chart-wrapper"><canvas id="aiChart"></canvas></div>
+                <div class="mermaid-container" id="mermaidContainer" style="display: none;">
+                    <div class="mermaid-header">
+                        <span>📊 Schema Generato</span>
+                        <button class="mermaid-copy-btn" onclick="copyMermaidCode()">📋 Copia Codice</button>
                     </div>
-                    <div class="insight-card">
-                        <h4>Mappa concettuale</h4>
-                        <div class="insight-meta" id="mapStatus">Pronta per visualizzare relazioni</div>
-                        <svg id="conceptMap" class="concept-map"></svg>
-                    </div>
+                    <div class="mermaid-render" id="mermaidRender"></div>
+                    <details class="mermaid-code-details">
+                        <summary>Mostra codice Mermaid</summary>
+                        <pre class="mermaid-code" id="mermaidCode"></pre>
+                    </details>
                 </div>
             </div>
+
             <!-- Export Tab -->
             <div class="tab-content" id="exportTab">
                 <div class="export-section">
@@ -559,7 +601,11 @@
             <div class="tab-content" id="savedTab">
                 <div class="retranscribe-section">
                     <button class="retranscribe-btn" onclick="loadAudioFile()"><span>📁</span><span>Carica Audio da Trascrivere</span></button>
-                    <p class="retranscribe-info">Supporta: .webm, .mp3, .wav, .m4a, .ogg</p>
+                    <p class="retranscribe-info">Supporta: .webm, .mp3, .wav, .m4a, .ogg (max ~25MB per parte)</p>
+                </div>
+                <div class="retranscribe-section" style="margin-top: 0.75rem; border-color: var(--accent);">
+                    <button class="retranscribe-btn" style="background: linear-gradient(135deg, var(--accent) 0%, #059669 100%);" onclick="importProject()"><span>📥</span><span>Importa Progetto (.json)</span></button>
+                    <p class="retranscribe-info">Carica un progetto esportato precedentemente</p>
                 </div>
                 <div class="section-title" style="margin-top: 1rem;">📂 Progetti Salvati</div>
                 <div class="recordings-list" id="recordingsList"></div>
@@ -579,6 +625,31 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="pdfModal">
+        <div class="modal">
+            <h2 class="modal-title">📄 Esporta PDF</h2>
+            <input type="text" class="modal-input" id="pdfNameInput" placeholder="Nome documento">
+            <div class="modal-checkboxes" style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                    <input type="checkbox" id="pdfIncludeTranscript" checked> Trascrizione
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                    <input type="checkbox" id="pdfIncludeNotes" checked> Note
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                    <input type="checkbox" id="pdfIncludeAI" checked> Analisi AI
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                    <input type="checkbox" id="pdfIncludeDrawing" checked> Disegno
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" onclick="$('pdfModal').classList.remove('active')">Annulla</button>
+                <button class="modal-btn confirm" onclick="confirmExportPDF()">Esporta</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="speakerModal">
         <div class="modal">
             <h2 class="modal-title">Nuovo Speaker</h2>
@@ -593,6 +664,7 @@
     <div class="toast" id="toast"></div>
     <audio id="keepAliveAudio" loop></audio>
     <input type="file" id="audioFileInput" accept="audio/*,.webm,.mp3,.wav,.m4a,.ogg">
+    <input type="file" id="projectFileInput" accept=".json,application/json">
 
     <script>
         // ============ IndexedDB ============
@@ -768,15 +840,8 @@
 
         function handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
-                if (isRecording && bgAudioContext && bgAudioContext.state === 'suspended') bgAudioContext.resume().catch(() => {});
-                if (isRecording && audioContext?.state === 'suspended') audioContext.resume().catch(() => {});
+                if (isRecording && bgAudioContext) bgAudioContext.resume().catch(() => {});
                 if (backgroundMode && 'wakeLock' in navigator) navigator.wakeLock.request('screen').then(wl => { wakeLock = wl; }).catch(() => {});
-            } else if (document.visibilityState === 'hidden') {
-                if (backgroundMode) {
-                    if (bgAudioContext && bgAudioContext.state === 'suspended') bgAudioContext.resume().catch(() => {});
-                    const audio = $('keepAliveAudio'); if (audio && audio.paused) audio.play().catch(() => {});
-                }
-                if (isRecording && audioContext?.state === 'suspended') audioContext.resume().catch(() => {});
             }
         }
 
@@ -1043,20 +1108,44 @@
         let savedRecordings = JSON.parse(localStorage.getItem('voicescribe_recordings') || '[]');
         let whisperKey = localStorage.getItem('groq_whisper_key') || '';
         let llamaKey = localStorage.getItem('groq_llama_key') || '';
+        let gemmaKey = localStorage.getItem('openrouter_gemma_key') || '';
+        let selectedAiModel = localStorage.getItem('selected_ai_model') || 'gemma';
         let wakeLock = null, backgroundMode = false;
         const CHUNK_INTERVAL = 2 * 60 * 1000;
         let currentSessionId = null, chunkCount = 0, chunkTimer = null, currentStream = null;
         const $ = id => document.getElementById(id);
-        let chartInstance = null, chartData = null, conceptMapData = null;
 
         // Notes
         let notesText = '';
+        
+        // AI Results storage
+        let aiResults = {
+            correct: null,
+            summary: null,
+            keypoints: null,
+            improve: null,
+            flowchart: null,
+            mindmap: null,
+            timeline: null,
+            relations: null
+        };
 
         async function init() {
             await initDB();
             if (whisperKey) { $('whisperKeyBox').style.display = 'none'; $('whisperKeySaved').style.display = 'flex'; }
+            if (gemmaKey) { $('gemmaKeyBox').style.display = 'none'; $('gemmaKeySaved').style.display = 'flex'; }
             if (llamaKey) { $('llamaKeyBox').style.display = 'none'; $('llamaKeySaved').style.display = 'flex'; }
-            if (whisperKey && llamaKey) $('saveKeysBtn').style.display = 'none';
+            
+            // Setup AI model selector
+            $('aiModelSelect').value = selectedAiModel;
+            updateAiKeyVisibility();
+            $('aiModelSelect').onchange = () => {
+                selectedAiModel = $('aiModelSelect').value;
+                localStorage.setItem('selected_ai_model', selectedAiModel);
+                updateAiKeyVisibility();
+            };
+            
+            checkAllKeysSaved();
             updateSpeakerChips(); renderSavedRecordings(); setupVisualizer(); setupEvents();
             initCanvas();
             checkRecoveredChunks();
@@ -1066,6 +1155,26 @@
                 notesText = e.target.value;
                 $('notesCharCount').textContent = notesText.length;
             });
+        }
+        
+        function updateAiKeyVisibility() {
+            if (selectedAiModel === 'gemma') {
+                $('gemmaKeyBox').style.display = gemmaKey ? 'none' : 'block';
+                $('gemmaKeySaved').style.display = gemmaKey ? 'flex' : 'none';
+                $('llamaKeyBox').style.display = 'none';
+                $('llamaKeySaved').style.display = 'none';
+            } else {
+                $('llamaKeyBox').style.display = llamaKey ? 'none' : 'block';
+                $('llamaKeySaved').style.display = llamaKey ? 'flex' : 'none';
+                $('gemmaKeyBox').style.display = 'none';
+                $('gemmaKeySaved').style.display = 'none';
+            }
+        }
+        
+        function checkAllKeysSaved() {
+            const aiKeyOk = (selectedAiModel === 'gemma' && gemmaKey) || (selectedAiModel === 'llama' && llamaKey);
+            if (whisperKey && aiKeyOk) $('saveKeysBtn').style.display = 'none';
+            else $('saveKeysBtn').style.display = 'block';
         }
 
         async function checkRecoveredChunks() {
@@ -1101,15 +1210,42 @@
         $('saveKeysBtn').onclick = () => {
             const wk = $('whisperKeyInput').value.trim();
             const lk = $('llamaKeyInput').value.trim();
-            if (wk && wk.startsWith('gsk_')) { whisperKey = wk; localStorage.setItem('groq_whisper_key', wk); $('whisperKeyBox').style.display = 'none'; $('whisperKeySaved').style.display = 'flex'; }
-            if (lk && lk.startsWith('gsk_')) { llamaKey = lk; localStorage.setItem('groq_llama_key', lk); $('llamaKeyBox').style.display = 'none'; $('llamaKeySaved').style.display = 'flex'; }
-            if (whisperKey && llamaKey) $('saveKeysBtn').style.display = 'none';
+            const gk = $('gemmaKeyInput').value.trim();
+            
+            if (wk && wk.startsWith('gsk_')) { 
+                whisperKey = wk; 
+                localStorage.setItem('groq_whisper_key', wk); 
+                $('whisperKeyBox').style.display = 'none'; 
+                $('whisperKeySaved').style.display = 'flex'; 
+            }
+            if (lk && lk.startsWith('gsk_')) { 
+                llamaKey = lk; 
+                localStorage.setItem('groq_llama_key', lk); 
+            }
+            if (gk && gk.startsWith('sk-or-')) { 
+                gemmaKey = gk; 
+                localStorage.setItem('openrouter_gemma_key', gk); 
+            }
+            
+            updateAiKeyVisibility();
+            checkAllKeysSaved();
             showToast('✓ Chiavi salvate');
         };
 
         window.changeKey = type => {
-            if (type === 'whisper') { $('whisperKeyBox').style.display = 'block'; $('whisperKeySaved').style.display = 'none'; $('whisperKeyInput').value = ''; }
-            else { $('llamaKeyBox').style.display = 'block'; $('llamaKeySaved').style.display = 'none'; $('llamaKeyInput').value = ''; }
+            if (type === 'whisper') { 
+                $('whisperKeyBox').style.display = 'block'; 
+                $('whisperKeySaved').style.display = 'none'; 
+                $('whisperKeyInput').value = ''; 
+            } else if (type === 'gemma') {
+                $('gemmaKeyBox').style.display = 'block'; 
+                $('gemmaKeySaved').style.display = 'none'; 
+                $('gemmaKeyInput').value = '';
+            } else { 
+                $('llamaKeyBox').style.display = 'block'; 
+                $('llamaKeySaved').style.display = 'none'; 
+                $('llamaKeyInput').value = ''; 
+            }
             $('saveKeysBtn').style.display = 'block';
         };
 
@@ -1285,154 +1421,484 @@
 
         // Load audio file
         window.loadAudioFile = () => $('audioFileInput').click();
+        
+        // Split audio file into chunks using Web Audio API
+        async function splitAudioFile(file, chunkDurationMs = 120000) { // 2 minuti per chunk
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    
+                    const sampleRate = audioBuffer.sampleRate;
+                    const numberOfChannels = audioBuffer.numberOfChannels;
+                    const totalDuration = audioBuffer.duration * 1000; // in ms
+                    
+                    const chunks = [];
+                    let startMs = 0;
+                    
+                    while (startMs < totalDuration) {
+                        const endMs = Math.min(startMs + chunkDurationMs, totalDuration);
+                        const startSample = Math.floor((startMs / 1000) * sampleRate);
+                        const endSample = Math.floor((endMs / 1000) * sampleRate);
+                        const frameCount = endSample - startSample;
+                        
+                        // Create offline context for this chunk
+                        const offlineContext = new OfflineAudioContext(numberOfChannels, frameCount, sampleRate);
+                        const chunkBuffer = offlineContext.createBuffer(numberOfChannels, frameCount, sampleRate);
+                        
+                        // Copy audio data
+                        for (let channel = 0; channel < numberOfChannels; channel++) {
+                            const sourceData = audioBuffer.getChannelData(channel);
+                            const destData = chunkBuffer.getChannelData(channel);
+                            for (let i = 0; i < frameCount; i++) {
+                                destData[i] = sourceData[startSample + i] || 0;
+                            }
+                        }
+                        
+                        // Convert to WAV blob
+                        const wavBlob = await audioBufferToWav(chunkBuffer);
+                        chunks.push(wavBlob);
+                        
+                        startMs = endMs;
+                    }
+                    
+                    audioContext.close();
+                    resolve(chunks);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+        
+        // Convert AudioBuffer to WAV Blob
+        function audioBufferToWav(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+            
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            
+            const dataLength = buffer.length * blockAlign;
+            const bufferLength = 44 + dataLength;
+            
+            const arrayBuffer = new ArrayBuffer(bufferLength);
+            const view = new DataView(arrayBuffer);
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, bufferLength - 8, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(36, 'data');
+            view.setUint32(40, dataLength, true);
+            
+            // Write audio data
+            let offset = 44;
+            for (let i = 0; i < buffer.length; i++) {
+                for (let channel = 0; channel < numChannels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                    const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                    view.setInt16(offset, intSample, true);
+                    offset += 2;
+                }
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+        
         $('audioFileInput').onchange = async (e) => {
             const file = e.target.files[0]; if (!file) return;
             if (!whisperKey) { showToast('⚠️ Inserisci chiave Whisper'); return; }
-            showToast(`📁 Caricato: ${file.name}`);
+            
+            const fileSizeMB = file.size / (1024 * 1024);
+            showToast(`📁 ${file.name} (${fileSizeMB.toFixed(1)}MB)`);
+            
             isProcessing = true; updateUI();
-            showProgress(true, 'Trascrivo audio...', 50);
-            try { const text = await transcribeBlob(file); if (text) { addEntry(text); showToast('✓ Completato'); } else showToast('⚠️ Nessun testo'); }
-            catch (err) { showToast('⚠️ ' + err.message); }
-            audioBlob = file;
-            showProgress(false); isProcessing = false; updateUI();
+            
+            try {
+                // Se il file è piccolo (< 20MB), trascrivi direttamente
+                if (fileSizeMB < 20) {
+                    showProgress(true, 'Trascrivo audio...', 30);
+                    const text = await transcribeBlob(file);
+                    if (text) { 
+                        addEntry(text); 
+                        showToast('✓ Trascrizione completata'); 
+                    } else {
+                        showToast('⚠️ Nessun testo rilevato');
+                    }
+                } else {
+                    // File grande: dividi in chunk
+                    showProgress(true, 'Divido audio in parti...', 10);
+                    
+                    let chunks;
+                    try {
+                        chunks = await splitAudioFile(file);
+                        showToast(`📊 Diviso in ${chunks.length} parti`);
+                    } catch (splitErr) {
+                        // Fallback: prova a inviare direttamente
+                        console.error('Split failed:', splitErr);
+                        showProgress(true, 'Trascrivo audio...', 30);
+                        const text = await transcribeBlob(file);
+                        if (text) { 
+                            addEntry(text); 
+                            showToast('✓ Trascrizione completata'); 
+                        }
+                        throw new Error('stop'); // Skip rest
+                    }
+                    
+                    // Trascrivi ogni chunk
+                    let allText = '';
+                    for (let i = 0; i < chunks.length; i++) {
+                        const progress = 20 + (i / chunks.length) * 70;
+                        showProgress(true, `Trascrivo parte ${i + 1}/${chunks.length}...`, progress);
+                        
+                        try {
+                            const text = await transcribeBlob(chunks[i]);
+                            if (text) allText += (allText ? ' ' : '') + text;
+                        } catch (chunkErr) {
+                            console.error(`Chunk ${i + 1} error:`, chunkErr);
+                        }
+                    }
+                    
+                    if (allText) {
+                        addEntry(allText);
+                        showToast(`✓ Trascritte ${chunks.length} parti`);
+                    } else {
+                        showToast('⚠️ Nessun testo rilevato');
+                    }
+                }
+                
+                audioBlob = file;
+            } catch (err) {
+                if (err.message !== 'stop') {
+                    console.error('Transcription error:', err);
+                    showToast('⚠️ ' + (err.message || 'Errore trascrizione'));
+                }
+            }
+            
+            showProgress(false); 
+            isProcessing = false; 
+            updateUI();
             e.target.value = '';
         };
 
         // AI Analysis
-        function extractJSON(text) {
-            if (!text) return null;
-            const match = text.match(/\{[\s\S]*\}/);
-            if (!match) return null;
-            try { return JSON.parse(match[0]); } catch (e) { return null; }
-        }
-
-        function normalizeChartData(data) {
-            const labels = data.labels || data.categories || [];
-            const series = Array.isArray(data.series) ? data.series : [{ name: data.title || 'Serie', data: data.data || [] }];
-            return { title: data.title || 'Grafico', type: data.type || 'bar', labels, series };
-        }
-
-        function renderChart(data) {
-            const canvas = $('aiChart'); if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            chartData = data;
-            const palette = ['#00d4aa', '#7c3aed', '#f59e0b', '#ef4444', '#3b82f6', '#a3e635'];
-            const datasets = data.series.map((s, i) => ({
-                label: s.name || `Serie ${i + 1}`,
-                data: s.data || [],
-                backgroundColor: (s.color || palette[i % palette.length]) + 'cc',
-                borderColor: s.color || palette[i % palette.length],
-                borderWidth: 2,
-                tension: 0.35
-            }));
-            chartInstance = new Chart(ctx, {
-                type: (data.type === 'line' || data.type === 'radar' || data.type === 'pie') ? data.type : 'bar',
-                data: { labels: data.labels, datasets },
-                options: {
-                    plugins: { legend: { labels: { color: '#fff' } }, title: { display: true, text: data.title, color: '#fff', font: { size: 14, weight: 600 } } },
-                    scales: { x: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.08)' } }, y: { ticks: { color: '#a0a0b0' }, grid: { color: 'rgba(255,255,255,0.08)' }, beginAtZero: true } }
-                }
-            });
-            $('chartStatus').textContent = data.title || 'Grafico aggiornato';
-        }
-
-        function renderConceptMap(map) {
-            const svg = $('conceptMap'); if (!svg) return;
-            const ns = 'http://www.w3.org/2000/svg';
-            svg.innerHTML = '';
-            if (!map || !Array.isArray(map.nodes) || map.nodes.length === 0) {
-                $('mapStatus').textContent = 'Nessun nodo da mostrare';
-                return;
+        let lastMermaidCode = '';
+        
+        // Funzione per pulire il codice Mermaid
+        function cleanMermaidCode(content) {
+            let code = content
+                .replace(/```mermaid\n?/gi, '')
+                .replace(/```\n?/g, '')
+                .replace(/^\s*[\r\n]/gm, '\n')
+                .trim();
+            
+            // Trova l'inizio del codice Mermaid valido
+            const lines = code.split('\n');
+            const validStarts = ['flowchart', 'graph', 'mindmap', 'timeline', 'erdiagram', 'sequencediagram', 'pie', 'gantt'];
+            const startIdx = lines.findIndex(l => validStarts.some(s => l.trim().toLowerCase().startsWith(s)));
+            
+            if (startIdx > 0) {
+                code = lines.slice(startIdx).join('\n');
+            } else if (startIdx === -1) {
+                // Se non trova un inizio valido, crea un flowchart semplice
+                code = 'flowchart TD\n    A[Contenuto] --> B[Da elaborare]';
             }
-            conceptMapData = map;
-            const width = svg.clientWidth || 320, height = svg.clientHeight || 220;
-            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-            const center = { x: width / 2, y: height / 2 };
-            const radius = Math.min(width, height) / 2.4;
-            const positions = {};
-            const linkGroup = document.createElementNS(ns, 'g');
-            const nodeGroup = document.createElementNS(ns, 'g');
-            const nodes = map.nodes;
-            nodes.forEach((n, i) => {
-                const angle = (i / Math.max(1, nodes.length)) * Math.PI * 2;
-                const isCenter = i === 0 && map.topic;
-                const x = isCenter ? center.x : center.x + Math.cos(angle) * radius;
-                const y = isCenter ? center.y : center.y + Math.sin(angle) * radius;
-                positions[n.id || n.label || `n${i}`] = { x, y, label: n.label || n.id };
-            });
-            (map.links || []).forEach(l => {
-                const from = positions[l.from], to = positions[l.to];
-                if (!from || !to) return;
-                const line = document.createElementNS(ns, 'line');
-                line.setAttribute('x1', from.x); line.setAttribute('y1', from.y);
-                line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
-                line.setAttribute('class', 'concept-link');
-                linkGroup.appendChild(line);
-            });
-            Object.entries(positions).forEach(([id, pos]) => {
-                const circle = document.createElementNS(ns, 'circle');
-                circle.setAttribute('cx', pos.x); circle.setAttribute('cy', pos.y); circle.setAttribute('r', 18);
-                circle.setAttribute('class', 'concept-node');
-                nodeGroup.appendChild(circle);
-                const textEl = document.createElementNS(ns, 'text');
-                textEl.setAttribute('x', pos.x); textEl.setAttribute('y', pos.y + 4);
-                textEl.setAttribute('class', 'concept-label');
-                textEl.textContent = pos.label || id;
-                nodeGroup.appendChild(textEl);
-            });
-            svg.appendChild(linkGroup); svg.appendChild(nodeGroup);
-            $('mapStatus').textContent = map.topic ? `Tema: ${map.topic}` : 'Mappa aggiornata';
+            
+            // Pulizia caratteri problematici
+            code = code
+                .replace(/[""„]/g, '"')
+                .replace(/[''‚]/g, "'")
+                .replace(/…/g, '...')
+                .replace(/[–—]/g, '-')
+                .replace(/\t/g, '    ')
+                // Rimuovi emoji
+                .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
+                .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
+                .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+                .replace(/[\u{2600}-\u{26FF}]/gu, '')
+                .replace(/[\u{2700}-\u{27BF}]/gu, '')
+                // Converti accenti comuni
+                .replace(/[àáâãäå]/g, 'a')
+                .replace(/[èéêë]/g, 'e')
+                .replace(/[ìíîï]/g, 'i')
+                .replace(/[òóôõö]/g, 'o')
+                .replace(/[ùúûü]/g, 'u')
+                .replace(/[ÀÁÂÃÄÅ]/g, 'A')
+                .replace(/[ÈÉÊË]/g, 'E')
+                .replace(/[ÌÍÎÏ]/g, 'I')
+                .replace(/[ÒÓÔÕÖ]/g, 'O')
+                .replace(/[ÙÚÛÜ]/g, 'U')
+                .replace(/ñ/g, 'n')
+                .replace(/Ñ/g, 'N')
+                .replace(/ç/g, 'c')
+                .replace(/Ç/g, 'C');
+            
+            // Pulisci le linee
+            code = code.split('\n').map(line => {
+                // Rimuovi caratteri problematici dentro parentesi
+                return line
+                    .replace(/\[([^\]]+)\]/g, (match, text) => {
+                        const clean = text.replace(/[<>&]/g, '').trim();
+                        return `[${clean || 'Nodo'}]`;
+                    })
+                    .replace(/\(([^)]+)\)/g, (match, text) => {
+                        const clean = text.replace(/[<>&]/g, '').trim();
+                        return `(${clean || 'Nodo'})`;
+                    })
+                    .replace(/\{([^}]+)\}/g, (match, text) => {
+                        const clean = text.replace(/[<>&]/g, '').trim();
+                        return `{${clean || 'Decisione'}}`;
+                    });
+            }).join('\n');
+            
+            // Rimuovi righe vuote multiple
+            code = code.replace(/\n{3,}/g, '\n\n');
+            
+            return code.trim();
         }
-
+        
+        // Funzione per renderizzare Mermaid
+        async function renderMermaidDiagram(code, title) {
+            const renderDiv = $('mermaidRender');
+            const container = $('mermaidContainer');
+            
+            $('aiResult').innerHTML = `<div class="ai-result-title">${title}</div><div class="ai-result-content">⏳ Generazione schema...</div>`;
+            
+            try {
+                // Crea un ID univoco
+                const id = 'mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                
+                // Prova a renderizzare
+                const { svg } = await mermaid.render(id, code);
+                
+                renderDiv.innerHTML = svg;
+                container.style.display = 'block';
+                $('aiResult').innerHTML = `<div class="ai-result-title">${title}</div><div class="ai-result-content">✅ Schema generato con successo!</div>`;
+                
+                // Restituisci l'SVG per salvarlo
+                return svg;
+            } catch (err) {
+                console.warn('Mermaid render error:', err);
+                
+                // Mostra il codice come fallback
+                renderDiv.innerHTML = `
+                    <div style="padding: 1rem; background: #f5f5f5; border-radius: 8px;">
+                        <p style="color: #e74c3c; margin-bottom: 0.5rem; font-weight: bold;">⚠️ Errore rendering diagramma</p>
+                        <p style="color: #666; font-size: 0.8rem; margin-bottom: 1rem;">Il codice generato potrebbe avere errori di sintassi. Puoi copiarlo e correggerlo manualmente.</p>
+                        <pre style="background: #fff; padding: 0.75rem; border-radius: 4px; font-size: 0.75rem; overflow-x: auto; white-space: pre-wrap;">${escapeHtml(code)}</pre>
+                    </div>`;
+                container.style.display = 'block';
+                $('aiResult').innerHTML = `<div class="ai-result-title">${title}</div><div class="ai-result-content">⚠️ Schema generato ma con errori di rendering. Vedi sotto per il codice.</div>`;
+                
+                return null;
+            }
+        }
+        
+        // Escape HTML per sicurezza
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         window.runAI = async (action) => {
-            if (!llamaKey) return showToast('Inserisci chiave Llama');
+            // Check appropriate key based on selected model
+            if (selectedAiModel === 'gemma' && !gemmaKey) return showToast('⚠️ Inserisci chiave OpenRouter');
+            if (selectedAiModel === 'llama' && !llamaKey) return showToast('⚠️ Inserisci chiave Groq');
+            
             const transcriptText = transcriptEntries.map(e => `${e.speakerName}: ${e.text}`).join('\n');
             const fullText = transcriptText + (notesText ? '\n\nNOTE:\n' + notesText : '');
-            if (!fullText.trim()) return showToast('Nessun contenuto');
-
+            if (!fullText.trim()) return showToast('⚠️ Nessun contenuto');
+            
+            const isSchema = ['flowchart', 'mindmap', 'timeline', 'relations'].includes(action);
+            
             const prompts = {
                 correct: `Correggi gli errori grammaticali nel seguente testo:\n\n${fullText}`,
                 summary: `Riassumi:\n\n${fullText}`,
                 keypoints: `Estrai i punti chiave:\n\n${fullText}`,
-                improve: `Riscrivi in modo piu chiaro e professionale:\n\n${fullText}`,
-                chart: `Analizza questo contenuto e proponi un grafico sintetico (massimo 6 categorie). Restituisci SOLO JSON con schema {\"title\":string,\"type\":\"bar|line|pie\",\"labels\":string[],\"series\":[{\"name\":string,\"data\":number[]}]}. Non aggiungere testo extra.\n\n${fullText}`,
-                concept: `Crea una mappa concettuale del contenuto. Restituisci SOLO JSON con schema {\"topic\":string,\"nodes\":[{\"id\":string,\"label\":string}],\"links\":[{\"from\":string,\"to\":string}]}. Non aggiungere testo extra.\n\n${fullText}`
+                improve: `Riscrivi in modo più chiaro e professionale:\n\n${fullText}`,
+                flowchart: `Crea un flowchart Mermaid dal testo. Regole STRETTE:
+- Inizia SOLO con: flowchart TD
+- Usa ID semplici: A, B, C, D (senza spazi)
+- Testo nodi tra parentesi quadre: A[Testo breve]
+- Frecce: A --> B oppure A -->|label| B
+- NO caratteri speciali, NO emoji, NO accenti
+- Max 3-4 parole per nodo
+
+Esempio corretto:
+flowchart TD
+    A[Inizio] --> B[Processo]
+    B --> C{Decisione}
+    C -->|Si| D[Fine]
+    C -->|No| B
+
+Testo: ${fullText}
+
+Rispondi SOLO con il codice Mermaid, niente altro:`,
+                mindmap: `Crea una mindmap Mermaid dal testo. Regole STRETTE:
+- Inizia SOLO con: mindmap
+- Seconda riga: root((Tema centrale))
+- Indenta con spazi per sottocategorie
+- NO caratteri speciali, NO emoji
+- Testo breve per ogni nodo
+
+Esempio corretto:
+mindmap
+    root((Argomento))
+        Categoria 1
+            Elemento A
+            Elemento B
+        Categoria 2
+            Elemento C
+
+Testo: ${fullText}
+
+Rispondi SOLO con il codice Mermaid, niente altro:`,
+                timeline: `Crea una timeline Mermaid dal testo. Regole STRETTE:
+- Inizia SOLO con: timeline
+- Seconda riga: title Titolo
+- Formato: sezione : evento
+- NO caratteri speciali, NO emoji
+
+Esempio corretto:
+timeline
+    title Cronologia
+    Fase 1 : Evento iniziale
+    Fase 2 : Sviluppo
+    Fase 3 : Conclusione
+
+Testo: ${fullText}
+
+Rispondi SOLO con il codice Mermaid, niente altro:`,
+                relations: `Crea un diagramma relazioni Mermaid dal testo. Regole STRETTE:
+- Inizia SOLO con: graph TD
+- ID semplici: A, B, C
+- Testo tra parentesi quadre: A[Nome]
+- Connessioni: A --> B oppure A --- B
+- Label su frecce: A -->|relazione| B
+- NO caratteri speciali, NO emoji
+
+Esempio corretto:
+graph TD
+    A[Persona 1] -->|conosce| B[Persona 2]
+    B -->|lavora con| C[Persona 3]
+    A --- C
+
+Testo: ${fullText}
+
+Rispondi SOLO con il codice Mermaid, niente altro:`
             };
-            const titles = { correct: 'Corretto', summary: 'Riassunto', keypoints: 'Punti Chiave', improve: 'Migliorato', chart: 'Grafico', concept: 'Mappa' };
+            
+            const titles = { 
+                correct: '✏️ Corretto', 
+                summary: '📝 Riassunto', 
+                keypoints: '🎯 Punti Chiave', 
+                improve: '💎 Migliorato',
+                flowchart: '🔀 Flowchart',
+                mindmap: '🧠 Mappa Concettuale',
+                timeline: '📅 Timeline',
+                relations: '🔗 Diagramma Relazioni'
+            };
+            
             document.querySelectorAll('.ai-btn').forEach(btn => btn.classList.add('processing'));
-            $('aiResult').innerHTML = '<div class=\"ai-result-empty\">Elaborazione...</div>';
-            if (action === 'chart') $('chartStatus').textContent = 'Genero il grafico...';
-            if (action === 'concept') $('mapStatus').textContent = 'Genero la mappa...';
+            $('aiResult').innerHTML = `<div class="ai-result-empty">⏳ ${isSchema ? 'Generazione schema' : 'Elaborazione'} con ${selectedAiModel === 'gemma' ? 'Gemma 3' : 'Llama'}...</div>`;
+            $('mermaidContainer').style.display = 'none';
+            
             try {
-                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST', headers: { 'Authorization': `Bearer ${llamaKey}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: prompts[action] }], max_tokens: 2048, temperature: 0.3 })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error?.message || 'Errore');
-                const content = data.choices?.[0]?.message?.content || '';
-                if (action === 'chart') {
-                    const parsed = extractJSON(content);
-                    if (!parsed) throw new Error('Risultato non valido');
-                    const normalized = normalizeChartData(parsed);
-                    renderChart(normalized);
-                    $('aiResult').innerHTML = `<div class=\"ai-result-title\">${titles[action]}</div><div class=\"ai-result-content\">Grafico pronto: ${normalized.title}</div>`;
-                } else if (action === 'concept') {
-                    const parsed = extractJSON(content);
-                    if (!parsed) throw new Error('Risultato non valido');
-                    renderConceptMap(parsed);
-                    $('aiResult').innerHTML = `<div class=\"ai-result-title\">${titles[action]}</div><div class=\"ai-result-content\">Mappa concettuale aggiornata.</div>`;
+                let res, data;
+                
+                if (selectedAiModel === 'gemma') {
+                    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST', 
+                        headers: { 
+                            'Authorization': `Bearer ${gemmaKey}`, 
+                            'Content-Type': 'application/json',
+                            'HTTP-Referer': window.location.href,
+                            'X-Title': 'VoiceScribe Pro'
+                        },
+                        body: JSON.stringify({ 
+                            model: 'google/gemma-3-27b-it:free', 
+                            messages: [{ role: 'user', content: prompts[action] }], 
+                            max_tokens: 2048, 
+                            temperature: isSchema ? 0.2 : 0.3 
+                        })
+                    });
                 } else {
-                    $('aiResult').innerHTML = `<div class=\"ai-result-title\">${titles[action]}</div><div class=\"ai-result-content\">${content || 'Nessun risultato'}</div>`;
+                    res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST', 
+                        headers: { 
+                            'Authorization': `Bearer ${llamaKey}`, 
+                            'Content-Type': 'application/json' 
+                        },
+                        body: JSON.stringify({ 
+                            model: 'llama-3.1-8b-instant', 
+                            messages: [{ role: 'user', content: prompts[action] }], 
+                            max_tokens: 2048, 
+                            temperature: isSchema ? 0.2 : 0.3 
+                        })
+                    });
                 }
-            } catch (e) {
-                $('aiResult').innerHTML = `<div class=\"ai-result-empty\">${e.message}</div>`;
-                if (action === 'chart') $('chartStatus').textContent = 'Errore nella generazione';
-                if (action === 'concept') $('mapStatus').textContent = 'Errore nella generazione';
+                
+                data = await res.json();
+                if (!res.ok) throw new Error(data.error?.message || data.error || 'Errore');
+                
+                const content = data.choices?.[0]?.message?.content || '';
+                
+                if (isSchema) {
+                    // Parse e pulisci codice Mermaid
+                    let mermaidCode = cleanMermaidCode(content);
+                    
+                    lastMermaidCode = mermaidCode;
+                    $('mermaidCode').textContent = mermaidCode;
+                    
+                    // Salva il risultato (SVG verrà aggiunto dopo il render)
+                    aiResults[action] = { type: 'schema', code: mermaidCode, title: titles[action], svg: null };
+                    
+                    // Render Mermaid e salva SVG
+                    const svg = await renderMermaidDiagram(mermaidCode, titles[action]);
+                    if (svg) {
+                        aiResults[action].svg = svg;
+                    }
+                } else {
+                    $('aiResult').innerHTML = `<div class="ai-result-title">${titles[action]}</div><div class="ai-result-content">${content || 'Nessun risultato'}</div>`;
+                    // Salva il risultato
+                    aiResults[action] = { type: 'text', content: content, title: titles[action] };
+                    $('mermaidContainer').style.display = 'none';
+                }
+            } catch (e) { 
+                $('aiResult').innerHTML = `<div class="ai-result-empty">⚠️ ${e.message}</div>`; 
             }
             document.querySelectorAll('.ai-btn').forEach(btn => btn.classList.remove('processing'));
-        };        // UI
+        };
+        
+        window.copyMermaidCode = () => {
+            if (lastMermaidCode) {
+                navigator.clipboard.writeText(lastMermaidCode).then(() => {
+                    showToast('📋 Codice copiato!');
+                }).catch(() => {
+                    showToast('⚠️ Errore copia');
+                });
+            }
+        };
+
+        // UI
         function updateUI() {
             const btn = $('recordBtn'), cont = $('recordBtnContainer'), icon = $('recordIcon');
             const pauseBtn = $('pauseBtn'), pauseIcon = $('pauseIcon'), timer = $('timer');
@@ -1530,47 +1996,39 @@
             updateStats();
         }
 
-        function getChartImage() {
-            if (chartInstance && typeof chartInstance.toBase64Image === 'function') return chartInstance.toBase64Image();
-            return null;
-        }
-
-        function getConceptMapImage() {
-            const svg = $('conceptMap'); if (!svg) return null;
-            const serializer = new XMLSerializer();
-            const svgStr = serializer.serializeToString(svg);
-            return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
-        }
-
-        async function getConceptMapPng() {
-            const svgData = getConceptMapImage();
-            if (!svgData) return null;
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 900; canvas.height = 540;
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#0a0a0f';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/png'));
-                };
-                img.onerror = () => resolve(null);
-                img.src = svgData;
-            });
-        }
-
         // Export
-        window.exportPDF = async () => {
-            if (!transcriptEntries.length && !notesText && drawingHistory.length === 0) return showToast('Nessun contenuto');
+        window.exportPDF = () => {
+            if (!transcriptEntries.length && !notesText && drawingHistory.length === 0 && !Object.values(aiResults).some(r => r !== null)) {
+                return showToast('Nessun contenuto');
+            }
+            $('pdfNameInput').value = `VoiceScribe_${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}`;
+            $('pdfIncludeTranscript').checked = transcriptEntries.length > 0;
+            $('pdfIncludeNotes').checked = !!notesText;
+            $('pdfIncludeAI').checked = Object.values(aiResults).some(r => r !== null);
+            $('pdfIncludeDrawing').checked = drawingHistory.length > 0;
+            $('pdfModal').classList.add('active');
+        };
+        
+        window.confirmExportPDF = async () => {
+            const pdfName = $('pdfNameInput').value.trim() || 'VoiceScribe';
+            const includeTranscript = $('pdfIncludeTranscript').checked;
+            const includeNotes = $('pdfIncludeNotes').checked;
+            const includeAI = $('pdfIncludeAI').checked;
+            const includeDrawing = $('pdfIncludeDrawing').checked;
+            
+            $('pdfModal').classList.remove('active');
+            showToast('⏳ Generazione PDF...');
+            
+            // Piccolo delay per mostrare il toast
+            await new Promise(r => setTimeout(r, 100));
+            
             const { jsPDF } = window.jspdf, doc = new jsPDF();
-            doc.setFontSize(20); doc.setTextColor(0,212,170); doc.text('VoiceScribe Pro', 20, 25);
+            doc.setFontSize(20); doc.setTextColor(0,212,170); doc.text(pdfName, 20, 25);
             doc.setFontSize(10); doc.setTextColor(100); doc.text(`${new Date().toLocaleDateString('it-IT')} - ${$('timer').textContent}`, 20, 32);
             doc.line(20,36,190,36); let y = 45; doc.setFontSize(9);
             
             // Transcript
-            if (transcriptEntries.length) {
+            if (includeTranscript && transcriptEntries.length) {
                 doc.setFontSize(12); doc.setTextColor(0,150,120); doc.text('TRASCRIZIONE', 20, y); y += 8;
                 doc.setFontSize(9);
                 transcriptEntries.forEach(e => {
@@ -1581,39 +2039,420 @@
             }
             
             // Notes
-            if (notesText) {
+            if (includeNotes && notesText) {
                 y += 5; if (y > 250) { doc.addPage(); y = 20; }
                 doc.setFontSize(12); doc.setTextColor(0,150,120); doc.text('NOTE', 20, y); y += 8;
                 doc.setFontSize(9); doc.setTextColor(0);
                 doc.splitTextToSize(notesText, 165).forEach(l => { if (y > 270) { doc.addPage(); y = 20; } doc.text(l, 20, y); y += 4; });
             }
-
-            // Grafico
-            const chartImg = getChartImage();
-            if (chartImg) {
-                if (y > 200) { doc.addPage(); y = 20; }
-                doc.setFontSize(12); doc.setTextColor(0,150,120); doc.text('GRAFICO', 20, y); y += 6;
-                doc.addImage(chartImg, 'PNG', 20, y, 170, 90); y += 100;
-            }
-
-            // Mappa concettuale
-            const mapImg = await getConceptMapPng();
-            if (mapImg) {
-                if (y > 180) { doc.addPage(); y = 20; }
-                doc.setFontSize(12); doc.setTextColor(0,150,120); doc.text('MAPPA CONCETTUALE', 20, y); y += 6;
-                doc.addImage(mapImg, 'PNG', 20, y, 170, 100); y += 110;
+            
+            // AI Results
+            if (includeAI) {
+                const aiEntries = Object.entries(aiResults).filter(([k, v]) => v !== null);
+                if (aiEntries.length > 0) {
+                    y += 8; if (y > 230) { doc.addPage(); y = 20; }
+                    doc.setFontSize(14); doc.setTextColor(124,58,237); doc.text('ANALISI AI', 20, y); y += 10;
+                    
+                    // Pre-cattura tutti gli schemi con dimensioni corrette
+                    const schemaImages = {};
+                    for (const [action, result] of aiEntries) {
+                        if (result.type === 'schema' && result.code) {
+                            try {
+                                // Renderizza lo schema nel container
+                                const id = 'pdf-mermaid-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+                                const { svg } = await mermaid.render(id, result.code);
+                                $('mermaidRender').innerHTML = svg;
+                                $('mermaidContainer').style.display = 'block';
+                                
+                                // Attendi il rendering completo
+                                await new Promise(r => setTimeout(r, 100));
+                                
+                                // Cattura con html2canvas e ottieni dimensioni
+                                const imgData = await captureMermaidForPDF();
+                                if (imgData) schemaImages[action] = imgData;
+                            } catch (e) {
+                                console.warn('Pre-render failed for', action, e);
+                            }
+                        }
+                    }
+                    
+                    for (const [action, result] of aiEntries) {
+                        if (y > 250) { doc.addPage(); y = 20; }
+                        doc.setFontSize(11); doc.setTextColor(0,150,120); doc.text(result.title, 20, y); y += 7;
+                        doc.setFontSize(9); doc.setTextColor(0);
+                        
+                        if (result.type === 'text') {
+                            doc.splitTextToSize(result.content, 165).forEach(l => { 
+                                if (y > 270) { doc.addPage(); y = 20; } 
+                                doc.text(l, 20, y); y += 4; 
+                            });
+                        } else if (result.type === 'schema') {
+                            let imageAdded = false;
+                            
+                            // Usa l'immagine pre-catturata con proporzioni corrette per A4
+                            if (schemaImages[action]) {
+                                try {
+                                    const imgInfo = schemaImages[action];
+                                    const pageWidth = 170; // mm disponibili (A4 - margini)
+                                    const pageHeight = 257; // mm disponibili verticalmente
+                                    const maxImgHeight = 140; // mm max per singolo schema
+                                    
+                                    // Calcola aspect ratio
+                                    const aspectRatio = imgInfo.height / imgInfo.width;
+                                    
+                                    // Inizia con larghezza piena
+                                    let imgWidth = pageWidth;
+                                    let imgHeight = pageWidth * aspectRatio;
+                                    
+                                    // Se troppo alta, scala per rientrare
+                                    if (imgHeight > maxImgHeight) {
+                                        imgHeight = maxImgHeight;
+                                        imgWidth = maxImgHeight / aspectRatio;
+                                    }
+                                    
+                                    // Assicurati che non sia troppo stretta
+                                    if (imgWidth < 80) {
+                                        imgWidth = 80;
+                                        imgHeight = 80 * aspectRatio;
+                                    }
+                                    
+                                    // Se non c'è spazio nella pagina corrente, nuova pagina
+                                    const spaceNeeded = imgHeight + 25; // immagine + codice sotto
+                                    if (y + spaceNeeded > pageHeight) { 
+                                        doc.addPage(); 
+                                        y = 25; 
+                                    }
+                                    
+                                    // Centra orizzontalmente
+                                    const xOffset = 20 + (pageWidth - imgWidth) / 2;
+                                    
+                                    doc.addImage(imgInfo.data, 'PNG', xOffset, y, imgWidth, imgHeight);
+                                    y += imgHeight + 5;
+                                    imageAdded = true;
+                                } catch (e) {
+                                    console.warn('Add image failed:', e);
+                                }
+                            }
+                            
+                            // Fallback: prova con SVG salvato
+                            if (!imageAdded && result.svg) {
+                                try {
+                                    const imgData = await svgToImageWithDimensions(result.svg);
+                                    if (imgData && imgData.data) {
+                                        const pageWidth = 170;
+                                        const maxImgHeight = 140;
+                                        const aspectRatio = imgData.height / imgData.width;
+                                        
+                                        let imgWidth = pageWidth;
+                                        let imgHeight = pageWidth * aspectRatio;
+                                        
+                                        if (imgHeight > maxImgHeight) {
+                                            imgHeight = maxImgHeight;
+                                            imgWidth = maxImgHeight / aspectRatio;
+                                        }
+                                        
+                                        if (y + imgHeight + 20 > 257) { doc.addPage(); y = 25; }
+                                        const xOffset = 20 + (pageWidth - imgWidth) / 2;
+                                        doc.addImage(imgData.data, 'PNG', xOffset, y, imgWidth, imgHeight);
+                                        y += imgHeight + 5;
+                                        imageAdded = true;
+                                    }
+                                } catch (imgErr) {
+                                    console.warn('SVG fallback failed:', imgErr);
+                                }
+                            }
+                            
+                            // Se ancora non c'è immagine, mostra nota
+                            if (!imageAdded) {
+                                doc.setTextColor(100);
+                                doc.setFontSize(9);
+                                doc.text('[Schema generato - vedi codice sotto]', 20, y); 
+                                y += 6;
+                            }
+                            
+                            // Aggiungi il codice Mermaid (opzionale, più compatto)
+                            if (y > 250) { doc.addPage(); y = 20; }
+                            doc.setFontSize(6); doc.setTextColor(150);
+                            doc.text('Codice sorgente:', 20, y); y += 3;
+                            const codeLines = result.code.split('\n').slice(0, 8);
+                            codeLines.forEach(l => {
+                                if (y > 280) { doc.addPage(); y = 20; }
+                                doc.text(l.substring(0, 100), 22, y); y += 2.5;
+                            });
+                            if (result.code.split('\n').length > 8) {
+                                doc.text('...', 22, y); y += 2.5;
+                            }
+                        }
+                        y += 6;
+                    }
+                    
+                    // Ripristina lo stato del container Mermaid
+                    $('mermaidContainer').style.display = 'none';
+                }
             }
             
             // Drawing
-            if (drawingHistory.length > 0) {
+            if (includeDrawing && drawingHistory.length > 0) {
                 doc.addPage();
                 doc.setFontSize(12); doc.setTextColor(0,150,120); doc.text('DISEGNO', 20, 20);
                 const imgData = getCanvasDataUrl();
                 doc.addImage(imgData, 'PNG', 20, 30, 170, 100);
             }
             
-            doc.save(`voicescribe_${Date.now()}.pdf`); showToast('✓ PDF');
+            doc.save(`${pdfName.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`); 
+            showToast('✓ PDF esportato');
         };
+        
+        // Funzione per convertire SVG in immagine PNG
+        async function svgToImage(svgString) {
+            return new Promise((resolve, reject) => {
+                try {
+                    // Pulisci e prepara l'SVG
+                    let cleanSvg = svgString;
+                    
+                    // Estrai dimensioni dall'SVG o usa default
+                    let width = 800, height = 400;
+                    const widthMatch = svgString.match(/width="([^"]+)"/);
+                    const heightMatch = svgString.match(/height="([^"]+)"/);
+                    if (widthMatch) width = parseFloat(widthMatch[1]) || 800;
+                    if (heightMatch) height = parseFloat(heightMatch[1]) || 400;
+                    
+                    // Assicurati che l'SVG abbia xmlns
+                    if (!cleanSvg.includes('xmlns=')) {
+                        cleanSvg = cleanSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+                    }
+                    
+                    // Aggiungi sfondo bianco
+                    cleanSvg = cleanSvg.replace(/<svg([^>]*)>/, '<svg$1><rect width="100%" height="100%" fill="white"/>');
+                    
+                    // Converti in base64
+                    const svgBase64 = btoa(unescape(encodeURIComponent(cleanSvg)));
+                    const dataUrl = 'data:image/svg+xml;base64,' + svgBase64;
+                    
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const scale = 2;
+                        canvas.width = (img.naturalWidth || width) * scale;
+                        canvas.height = (img.naturalHeight || height) * scale;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.scale(scale, scale);
+                        ctx.drawImage(img, 0, 0);
+                        
+                        resolve(canvas.toDataURL('image/png', 1.0));
+                    };
+                    
+                    img.onerror = () => {
+                        // Fallback: prova con Blob URL
+                        const blob = new Blob([cleanSvg], { type: 'image/svg+xml' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        const img2 = new Image();
+                        img2.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width * 2;
+                            canvas.height = height * 2;
+                            const ctx = canvas.getContext('2d');
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.scale(2, 2);
+                            ctx.drawImage(img2, 0, 0);
+                            URL.revokeObjectURL(url);
+                            resolve(canvas.toDataURL('image/png', 1.0));
+                        };
+                        img2.onerror = () => {
+                            URL.revokeObjectURL(url);
+                            reject(new Error('SVG render failed'));
+                        };
+                        img2.src = url;
+                    };
+                    
+                    img.src = dataUrl;
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+        
+        // Cattura il contenitore Mermaid come immagine usando html2canvas
+        async function captureMermaidAsImage() {
+            const container = $('mermaidRender');
+            if (!container || !container.innerHTML || container.style.display === 'none') return null;
+            
+            try {
+                // Assicurati che il container sia visibile
+                const wasHidden = $('mermaidContainer').style.display === 'none';
+                if (wasHidden) $('mermaidContainer').style.display = 'block';
+                
+                // Usa html2canvas per catturare
+                const canvas = await html2canvas(container, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: true
+                });
+                
+                if (wasHidden) $('mermaidContainer').style.display = 'none';
+                
+                return canvas.toDataURL('image/png', 1.0);
+            } catch (e) {
+                console.warn('html2canvas failed:', e);
+                
+                // Fallback: prova con SVG interno
+                try {
+                    const svgEl = container.querySelector('svg');
+                    if (svgEl) {
+                        const serializer = new XMLSerializer();
+                        let svgString = serializer.serializeToString(svgEl);
+                        return await svgToImage(svgString);
+                    }
+                } catch (e2) {
+                    console.warn('SVG fallback failed:', e2);
+                }
+            }
+            return null;
+        }
+        
+        // Cattura Mermaid per PDF con dimensioni corrette
+        async function captureMermaidForPDF() {
+            const container = $('mermaidRender');
+            if (!container || !container.innerHTML) return null;
+            
+            try {
+                const wasHidden = $('mermaidContainer').style.display === 'none';
+                if (wasHidden) $('mermaidContainer').style.display = 'block';
+                
+                // Aggiungi classe per cattura PDF (dimensioni fisse)
+                container.classList.add('pdf-capture');
+                
+                // Forza layout
+                await new Promise(r => setTimeout(r, 50));
+                
+                // Ottieni l'SVG per le dimensioni originali
+                const svgEl = container.querySelector('svg');
+                let origWidth = container.scrollWidth || 700;
+                let origHeight = container.scrollHeight || 400;
+                
+                if (svgEl) {
+                    // Imposta dimensioni fisse sull'SVG per PDF
+                    const currentWidth = svgEl.getAttribute('width');
+                    const currentHeight = svgEl.getAttribute('height');
+                    
+                    // Se l'SVG non ha dimensioni fisse, impostiamole
+                    if (!currentWidth || currentWidth.includes('%')) {
+                        svgEl.style.width = '100%';
+                        svgEl.style.maxWidth = '660px';
+                    }
+                    
+                    // Attendi il re-render
+                    await new Promise(r => setTimeout(r, 50));
+                    
+                    origWidth = container.scrollWidth;
+                    origHeight = container.scrollHeight;
+                }
+                
+                // Cattura con html2canvas
+                const canvas = await html2canvas(container, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: true,
+                    width: origWidth,
+                    height: origHeight
+                });
+                
+                // Rimuovi classe PDF
+                container.classList.remove('pdf-capture');
+                if (svgEl) {
+                    svgEl.style.width = '';
+                    svgEl.style.maxWidth = '';
+                }
+                
+                if (wasHidden) $('mermaidContainer').style.display = 'none';
+                
+                return {
+                    data: canvas.toDataURL('image/png', 1.0),
+                    width: canvas.width / 2,
+                    height: canvas.height / 2,
+                    originalWidth: origWidth,
+                    originalHeight: origHeight
+                };
+            } catch (e) {
+                console.warn('captureMermaidForPDF failed:', e);
+                $('mermaidRender').classList.remove('pdf-capture');
+                return null;
+            }
+        }
+        
+        // Converti SVG in immagine con dimensioni
+        async function svgToImageWithDimensions(svgString) {
+            return new Promise((resolve, reject) => {
+                try {
+                    let cleanSvg = svgString;
+                    
+                    // Estrai dimensioni
+                    let width = 600, height = 400;
+                    const widthMatch = svgString.match(/width="([^"]+)"/);
+                    const heightMatch = svgString.match(/height="([^"]+)"/);
+                    const viewBoxMatch = svgString.match(/viewBox="([^"]+)"/);
+                    
+                    if (viewBoxMatch) {
+                        const parts = viewBoxMatch[1].split(/\s+|,/).map(Number);
+                        if (parts.length >= 4) {
+                            width = parts[2] || width;
+                            height = parts[3] || height;
+                        }
+                    }
+                    if (widthMatch) width = parseFloat(widthMatch[1]) || width;
+                    if (heightMatch) height = parseFloat(heightMatch[1]) || height;
+                    
+                    // Assicurati che l'SVG abbia xmlns
+                    if (!cleanSvg.includes('xmlns=')) {
+                        cleanSvg = cleanSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+                    }
+                    
+                    // Aggiungi sfondo bianco
+                    cleanSvg = cleanSvg.replace(/<svg([^>]*)>/, '<svg$1><rect width="100%" height="100%" fill="white"/>');
+                    
+                    const svgBase64 = btoa(unescape(encodeURIComponent(cleanSvg)));
+                    const dataUrl = 'data:image/svg+xml;base64,' + svgBase64;
+                    
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const scale = 2;
+                        canvas.width = (img.naturalWidth || width) * scale;
+                        canvas.height = (img.naturalHeight || height) * scale;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.scale(scale, scale);
+                        ctx.drawImage(img, 0, 0);
+                        
+                        resolve({
+                            data: canvas.toDataURL('image/png', 1.0),
+                            width: canvas.width / scale,
+                            height: canvas.height / scale
+                        });
+                    };
+                    
+                    img.onerror = () => reject(new Error('Image load failed'));
+                    img.src = dataUrl;
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
 
         window.exportTXT = () => {
             if (!transcriptEntries.length && !notesText) return showToast('Nessun contenuto');
@@ -1646,44 +2485,49 @@
         window.confirmSaveSession = async () => {
             const name = $('sessionNameInput').value.trim(); if (!name) return;
             const sessionId = Date.now();
+            
+            // Save audio
             if (audioBlob) { try { await saveSessionAudio(sessionId, audioBlob); } catch (e) {} }
+            
+            // Save drawing
             const drawingData = drawingHistory.length > 0 ? getCanvasDataUrl() : null;
             if (drawingData) { try { await saveSessionDrawing(sessionId, drawingData); } catch (e) {} }
-            const chartImg = getChartImage();
-            const mapImg = await getConceptMapPng();
+            
+            // Check if we have any AI results
+            const hasAiResults = Object.values(aiResults).some(r => r !== null);
+            
             savedRecordings.push({ 
                 id: sessionId, name, date: new Date().toISOString(), duration: $('timer').textContent, 
                 entries: transcriptEntries, speakers, notes: notesText,
                 hasAudio: !!audioBlob, hasDrawing: drawingHistory.length > 0, hasNotes: !!notesText,
-                hasChart: !!chartImg, hasMap: !!mapImg, chart: chartData, concept: conceptMapData, chartImage: chartImg, mapImage: mapImg
+                hasAI: hasAiResults, aiResults: hasAiResults ? {...aiResults} : null
             });
             localStorage.setItem('voicescribe_recordings', JSON.stringify(savedRecordings));
             $('saveModal').classList.remove('active'); 
             renderSavedRecordings(); 
-            showToast('? Progetto salvato');
+            showToast('✓ Progetto salvato');
         };
-
 
         // Saved Recordings
         function renderSavedRecordings() {
             const c = $('recordingsList');
             c.innerHTML = savedRecordings.length ? savedRecordings.map(r => `
                 <div class="recording-item">
-                    <div class="recording-item-icon">PRJ</div>
+                    <div class="recording-item-icon">📁</div>
                     <div class="recording-item-info">
                         <div class="recording-item-title">${r.name}</div>
-                        <div class="recording-item-meta">${new Date(r.date).toLocaleDateString('it-IT')} ? ${r.duration}</div>
+                        <div class="recording-item-meta">${new Date(r.date).toLocaleDateString('it-IT')} • ${r.duration}</div>
                         <div class="recording-item-badges">
-                            ${r.hasAudio ? '<span class="item-badge audio">Audio</span>' : ''}
-                            ${r.hasNotes ? '<span class="item-badge notes">Note</span>' : ''}
-                            ${r.hasDrawing ? '<span class="item-badge drawing">Disegno</span>' : ''}
-                            ${r.hasChart ? '<span class="item-badge notes">Grafico</span>' : ''}
-                            ${r.hasMap ? '<span class="item-badge notes">Mappa</span>' : ''}
+                            ${r.hasAudio ? '<span class="item-badge audio">🎵 Audio</span>' : ''}
+                            ${r.hasNotes ? '<span class="item-badge notes">📝 Note</span>' : ''}
+                            ${r.hasDrawing ? '<span class="item-badge drawing">✏️ Disegno</span>' : ''}
+                            ${r.hasAI ? '<span class="item-badge ai">🤖 AI</span>' : ''}
                         </div>
                     </div>
                     <div class="recording-item-actions">
-                        <button class="action-btn" onclick="loadRec(${r.id})" title="Carica">APR</button>
-                        <button class="action-btn delete" onclick="delRec(${r.id})" title="Elimina">DEL</button>
+                        <button class="action-btn" onclick="loadRec(${r.id})" title="Carica">📂</button>
+                        <button class="action-btn" onclick="exportProjectJSON(${r.id})" title="Esporta JSON" style="color: var(--accent);">📤</button>
+                        <button class="action-btn delete" onclick="delRec(${r.id})" title="Elimina">🗑️</button>
                     </div>
                 </div>
             `).join('') : '<div class="empty-state"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg><p>Nessun progetto</p></div>';
@@ -1711,11 +2555,39 @@
                     loadCanvasFromDataUrl(drawingData);
                 }
             }
-
-            chartData = r.chart || null;
-            conceptMapData = r.concept || null;
-            if (chartData) { renderChart(chartData); $('chartStatus').textContent = chartData.title || 'Grafico caricato'; }
-            if (conceptMapData) { renderConceptMap(conceptMapData); }
+            
+            // Load AI results
+            if (r.hasAI && r.aiResults) {
+                aiResults = {...r.aiResults};
+                // Display last AI result if available
+                const lastResult = Object.entries(aiResults).find(([k, v]) => v !== null);
+                if (lastResult) {
+                    const [action, result] = lastResult;
+                    if (result.type === 'schema') {
+                        $('aiResult').innerHTML = `<div class="ai-result-title">${result.title}</div><div class="ai-result-content">Schema caricato dal progetto.</div>`;
+                        $('mermaidCode').textContent = result.code;
+                        if (result.svg) {
+                            $('mermaidRender').innerHTML = result.svg;
+                        } else {
+                            try {
+                                const { svg } = await mermaid.render('mermaid-svg-' + Date.now(), result.code);
+                                $('mermaidRender').innerHTML = svg;
+                            } catch (e) {
+                                $('mermaidRender').innerHTML = '<div style="color: #666; padding: 1rem;">Errore rendering</div>';
+                            }
+                        }
+                        $('mermaidContainer').style.display = 'block';
+                        lastMermaidCode = result.code;
+                    } else {
+                        $('aiResult').innerHTML = `<div class="ai-result-title">${result.title}</div><div class="ai-result-content">${result.content}</div>`;
+                        $('mermaidContainer').style.display = 'none';
+                    }
+                }
+            } else {
+                aiResults = { correct: null, summary: null, keypoints: null, improve: null, flowchart: null, mindmap: null, timeline: null, relations: null };
+                $('aiResult').innerHTML = '<div class="ai-result-empty">Seleziona un\'azione AI</div>';
+                $('mermaidContainer').style.display = 'none';
+            }
             
             updateSpeakerChips(); renderAllEntries();
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1734,6 +2606,122 @@
             renderSavedRecordings(); 
             showToast('Eliminato'); 
         };
+        
+        // Export single project as JSON
+        window.exportProjectJSON = async (id) => {
+            const r = savedRecordings.find(x => x.id === id);
+            if (!r) return showToast('⚠️ Progetto non trovato');
+            
+            const projectData = { ...r };
+            
+            // Include audio as base64 if available
+            if (r.hasAudio) {
+                try {
+                    const audioBlob = await getSessionAudio(id);
+                    if (audioBlob) {
+                        const reader = new FileReader();
+                        const audioBase64 = await new Promise((resolve) => {
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.readAsDataURL(audioBlob);
+                        });
+                        projectData.audioData = audioBase64;
+                    }
+                } catch (e) { console.error('Audio export error:', e); }
+            }
+            
+            // Include drawing if available
+            if (r.hasDrawing) {
+                try {
+                    const drawingData = await getSessionDrawing(id);
+                    if (drawingData) projectData.drawingData = drawingData;
+                } catch (e) { console.error('Drawing export error:', e); }
+            }
+            
+            const jsonStr = JSON.stringify(projectData, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${r.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+            a.click();
+            showToast('✓ Progetto esportato');
+        };
+        
+        // Import project from JSON
+        window.importProject = () => $('projectFileInput').click();
+        
+        $('projectFileInput').onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Verifica che sia un file JSON
+            if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+                showToast('⚠️ Seleziona un file .json');
+                e.target.value = '';
+                return;
+            }
+            
+            try {
+                const text = await file.text();
+                
+                let projectData;
+                try {
+                    projectData = JSON.parse(text);
+                } catch (parseErr) {
+                    throw new Error('File JSON non valido');
+                }
+                
+                // Validate required fields
+                if (!projectData.name) {
+                    throw new Error('Il file non contiene un nome progetto');
+                }
+                if (!projectData.entries || !Array.isArray(projectData.entries)) {
+                    projectData.entries = [];
+                }
+                
+                // Generate new ID to avoid conflicts
+                const newId = Date.now();
+                projectData.id = newId;
+                projectData.date = projectData.date || new Date().toISOString();
+                projectData.duration = projectData.duration || '00:00';
+                
+                // Save audio if present
+                if (projectData.audioData) {
+                    try {
+                        const response = await fetch(projectData.audioData);
+                        const audioBlob = await response.blob();
+                        await saveSessionAudio(newId, audioBlob);
+                        projectData.hasAudio = true;
+                    } catch (audioErr) {
+                        console.warn('Audio import skipped:', audioErr.message);
+                        projectData.hasAudio = false;
+                    }
+                    delete projectData.audioData;
+                }
+                
+                // Save drawing if present
+                if (projectData.drawingData) {
+                    try {
+                        await saveSessionDrawing(newId, projectData.drawingData);
+                        projectData.hasDrawing = true;
+                    } catch (drawErr) {
+                        console.warn('Drawing import skipped:', drawErr.message);
+                        projectData.hasDrawing = false;
+                    }
+                    delete projectData.drawingData;
+                }
+                
+                savedRecordings.push(projectData);
+                localStorage.setItem('voicescribe_recordings', JSON.stringify(savedRecordings));
+                renderSavedRecordings();
+                showToast(`✓ Importato: ${projectData.name}`);
+                
+            } catch (err) {
+                console.error('Import error:', err);
+                showToast('⚠️ ' + (err.message || 'Errore importazione'));
+            }
+            
+            e.target.value = '';
+        };
 
         // Events
         function setupEvents() {
@@ -1746,8 +2734,17 @@
                     if (tab.dataset.tab === 'notes') setTimeout(resizeCanvas, 100);
                 };
             });
-            ['sessionNameInput', 'whisperKeyInput', 'llamaKeyInput', 'newSpeakerInput'].forEach(id => {
-                $(id).onkeypress = e => { if (e.key === 'Enter') { if (id.includes('Key')) $('saveKeysBtn').click(); else if (id === 'sessionNameInput') confirmSaveSession(); else confirmAddSpeaker(); } };
+            ['sessionNameInput', 'whisperKeyInput', 'llamaKeyInput', 'gemmaKeyInput', 'newSpeakerInput', 'pdfNameInput'].forEach(id => {
+                if ($(id)) {
+                    $(id).onkeypress = e => { 
+                        if (e.key === 'Enter') { 
+                            if (id.includes('Key')) $('saveKeysBtn').click(); 
+                            else if (id === 'sessionNameInput') confirmSaveSession(); 
+                            else if (id === 'pdfNameInput') confirmExportPDF();
+                            else confirmAddSpeaker(); 
+                        } 
+                    };
+                }
             });
         }
 
@@ -1755,7 +2752,9 @@
 
         window.newTranscript = () => {
             if (isRecording) return showToast('⚠️ Ferma registrazione');
-            if (!transcriptEntries.length && !notesText && drawingHistory.length === 0) return showToast('Già vuoto');
+            if (!transcriptEntries.length && !notesText && drawingHistory.length === 0 && !Object.values(aiResults).some(r => r !== null)) {
+                return showToast('Già vuoto');
+            }
             if (confirm('Cancellare tutto?')) {
                 transcriptEntries = []; audioBlob = null; notesText = '';
                 $('timer').textContent = '00:00';
@@ -1763,15 +2762,13 @@
                 $('notesCharCount').textContent = '0';
                 drawingHistory = [];
                 redrawFromHistory();
-                chartData = null; conceptMapData = null;
-                if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-                const chartCtx = $('aiChart')?.getContext('2d'); if (chartCtx) chartCtx.clearRect(0,0,chartCtx.canvas.width, chartCtx.canvas.height);
-                if ($('conceptMap')) $('conceptMap').innerHTML = '';
-                $('chartStatus').textContent = 'Pronto per creare un grafico dalle trascrizioni';
-                $('mapStatus').textContent = 'Pronta per visualizzare relazioni';
+                // Reset AI results
+                aiResults = { correct: null, summary: null, keypoints: null, improve: null, flowchart: null, mindmap: null, timeline: null, relations: null };
+                lastMermaidCode = '';
+                $('mermaidContainer').style.display = 'none';
                 renderAllEntries(); updateStats();
-                $('aiResult').innerHTML = '<div class=\"ai-result-empty\">Seleziona un\'azione AI</div>';
-                showToast('✔ Nuovo progetto');
+                $('aiResult').innerHTML = '<div class="ai-result-empty">Seleziona un\'azione AI</div>';
+                showToast('✓ Nuovo progetto');
             }
         };
 
